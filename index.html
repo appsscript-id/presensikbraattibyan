@@ -1099,6 +1099,20 @@ body.ringkas #listSiswa small{display:none}
   body.app #vRekap{max-width:1000px}
   .wrap:has(#vKRekap:not(.hidden)){max-width:1000px}
 }
+
+/* ===== v5: HP - halaman bergulir normal, daftar murid & rekap tidak lagi di dalam kotak kecil ===== */
+@media (max-width:899px){
+  body{display:block !important}
+  #vDash:not(.hidden),body.app #vDash:not(.hidden){display:block !important;height:auto !important}
+  #vDash .card{display:block !important;flex:none !important;min-height:0 !important}
+  #vDash #listSiswa{overflow:visible !important;min-height:0 !important;max-height:none !important}
+  #vRekap:not(.hidden),#vKRekap:not(.hidden),#vWaliHasil:not(.hidden),#vKepsek:not(.hidden),
+  body.app #vRekap:not(.hidden){display:block !important;max-height:none !important}
+  #vKepsek .card{display:block !important;flex:none !important}
+  #rkList,#krList,#wrList,#kList,
+  #vKRekap #krList,#vRekap #rkList,#vWaliHasil #wrList,#vKepsek #kList{max-height:none !important;overflow:visible !important}
+  #vSet:not(.hidden){max-height:none !important;overflow:visible !important}
+}
 </style>
 
 <script>
