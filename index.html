@@ -392,6 +392,8 @@ var K = { token:"", nama:"", kelas:[] }, W = { token:"", nama:"", kelas:"" };
 // nama file suara yang diputar saat PIN benar dan masuk beranda (taruh file di folder yang sama dengan index.html)
 var SUARA_MASUK = "masuk.mp3";
 var modelsReady = false, stream = null, audioCtx = null, audioTit = new Audio("bunyi.mp3"), audioMasuk = new Audio(SUARA_MASUK);
+audioMasuk.preload = "auto";
+audioMasuk.onerror = function(){ infoSuara("File " + SUARA_MASUK + " tidak ditemukan atau tidak bisa dibaca. Cek nama file dan lokasinya.", "err"); };
 var $ = function(i){ return document.getElementById(i); };
 var COOLDOWN = 6000, terakhir = {};   // jeda (ms) sebelum murid yang sama boleh berbunyi lagi
 var VIEWS = ["vPilih","vLogin","vKLogin","vWali","vWaliHasil","vKepsek","vKRekap","vCam","vDash","vRekap"];
@@ -468,13 +470,19 @@ function tit(){
   try{ audioTit.currentTime = 0; var p = audioTit.play(); if(p && p.catch) p.catch(beep); }catch(e){ beep(); }
 }
 function bunyiMasuk(){
-  try{ audioMasuk.muted = false; audioMasuk.currentTime = 0; var p = audioMasuk.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+  try{
+    audioMasuk.muted = false; audioMasuk.currentTime = 0;
+    var p = audioMasuk.play();
+    if(p && p.catch) p.catch(function(e){
+      infoSuara("Suara masuk (" + SUARA_MASUK + ") gagal diputar: " + (e && e.name ? e.name : e) + ".", "err");
+    });
+  }catch(e){}
 }
 function unlockSuara(){
   initAudio();
   try{
     audioMasuk.muted = true; var pm = audioMasuk.play();
-    if(pm && pm.then) pm.then(function(){ audioMasuk.pause(); audioMasuk.currentTime = 0; audioMasuk.muted = false; })
+    if(pm && pm.then) pm.then(function(){ if(audioMasuk.muted){ audioMasuk.pause(); audioMasuk.currentTime = 0; audioMasuk.muted = false; } })
                        .catch(function(){ audioMasuk.muted = false; });
   }catch(e){}
   try{
@@ -1201,8 +1209,10 @@ function renderPin(box, o){
     sibuk = true;
     o.onOk(pin, function(){ sibuk = false; pin = ""; gambar(); });
   }
+  var izin = false;
   function tekan(k){
     if(sibuk) return;
+    if(!izin){ izin = true; unlockSuara(); }
     klik();
     if(k === "C") pin = "";
     else if(k === "⌫") pin = pin.slice(0, -1);
