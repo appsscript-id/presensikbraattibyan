@@ -1053,7 +1053,9 @@ body.ringkas #listSiswa small{display:none}
   body.app .head h2{font-size:22px}
   #stat b{font-size:22px}
 }
-<style>
+<script>
+function mulaiUI(){
+var CSS_V = `
 /* ===== v4: kalender, tabel kelas, dashboard ===== */
 .k-Hadir,.kal .kc.k-Hadir{background:#16a679;color:#fff}
 .k-Izin,.kal .kc.k-Izin{background:#f5a524;color:#3d2a00}
@@ -1098,10 +1100,8 @@ body.ringkas #listSiswa small{display:none}
   body.app #vRekap{max-width:1000px}
   .wrap:has(#vKRekap:not(.hidden)){max-width:1000px}
 }
-</style>
-
-<script>
-function mulaiUI(){
+`;
+var sty = document.createElement("style"); sty.textContent = CSS_V; document.head.appendChild(sty);
 var P = { tema:"biru", gelap:false, suara:true, bunyi:true, nada:"tek", ringkas:false };
 try{ Object.assign(P, JSON.parse(localStorage.getItem("pref") || "{}")); }catch(e){}
 function simpan(){ try{ localStorage.setItem("pref", JSON.stringify(P)); }catch(e){} }
@@ -1274,6 +1274,7 @@ var tKeluar = $("vDash").querySelector("button.red"); if(tKeluar) tKeluar.remove
 var tRekap = $("vDash").querySelector('button[onclick="bukaRekap()"]'); if(tRekap) tRekap.remove();
 
 // ---------- REKAP: kalender per murid (guru, kepala sekolah, wali) ----------
+var WARNA = { Hadir:["#16a679","#fff"], Izin:["#f5a524","#3d2a00"], Sakit:["#2f7df6","#fff"], Alpa:["#e5484d","#fff"] };
 var HARI = ["Sen","Sel","Rab","Kam","Jum","Sab","Min"];
 var BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 function namaBulan(b){ return BULAN[Number(b.substring(5, 7)) - 1] + " " + b.substring(0, 4); }
@@ -1297,12 +1298,14 @@ tampilRekap = function(r, eR, eL){
     var libur = (off + t - 1) % 7 >= 5;
     c.className = "kc" + (x ? " k-" + x.status : (libur ? " kw" : ""));
     c.textContent = t;
+    if(x && WARNA[x.status]){ c.style.background = WARNA[x.status][0]; c.style.color = WARNA[x.status][1]; }
     if(x) c.title = x.status + " (" + x.jam + ")"; else if(libur) c.title = "Libur (Sabtu/Minggu)";
     cal.appendChild(c);
   }
   eL.appendChild(cal);
   var lg = document.createElement("div"); lg.className = "kleg";
-  lg.innerHTML = '<span><i class="k-Hadir"></i>Hadir</span><span><i class="k-Izin"></i>Izin</span><span><i class="k-Sakit"></i>Sakit</span><span><i class="k-Alpa"></i>Alpa</span><span><i class="lib"></i>Libur (Sabtu/Minggu)</span>';
+  lg.innerHTML = ["Hadir","Izin","Sakit","Alpa"].map(function(k){ return '<span><i style="background:' + WARNA[k][0] + '"></i>' + k + '</span>'; }).join("") +
+    '<span><i class="lib"></i>Libur (Sabtu/Minggu)</span>';
   eL.appendChild(lg);
   r.list.forEach(function(x){ baris(eL, x.tanggal, x.status + " (" + x.jam + ")"); });
 };
@@ -1317,7 +1320,8 @@ function htmlTabel(r){
   r.siswa.forEach(function(s){
     var c = s.hitung, pr = persen(c);
     h += '<tr class="' + (pr >= 0 && pr < 75 ? "rendah" : "") + '"><td>' + esc(s.nama) + "</td>";
-    for(d = 1; d <= r.hari; d++){ var st = s.hari[d]; h += '<td class="' + (st ? "k-" + st : wk(d)) + '">' + (st ? st.charAt(0) : "") + "</td>"; }
+    for(d = 1; d <= r.hari; d++){ var st = s.hari[d], wr = st && WARNA[st];
+      h += '<td class="' + (st ? "k-" + st : wk(d)) + '"' + (wr ? ' style="background:' + wr[0] + ';color:' + wr[1] + '"' : "") + '>' + (st ? st.charAt(0) : "") + "</td>"; }
     h += '<td class="sum">' + c.Hadir + '</td><td class="sum">' + c.Izin + '</td><td class="sum">' + c.Sakit + '</td><td class="sum">' + c.Alpa +
          '</td><td class="sum pr">' + (pr >= 0 ? pr + "%" : "-") + "</td></tr>";
   });
