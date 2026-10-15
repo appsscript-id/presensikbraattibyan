@@ -1053,6 +1053,51 @@ body.ringkas #listSiswa small{display:none}
   body.app .head h2{font-size:22px}
   #stat b{font-size:22px}
 }
+<style>
+/* ===== v4: kalender, tabel kelas, dashboard ===== */
+.k-Hadir,.kal .kc.k-Hadir{background:#16a679;color:#fff}
+.k-Izin,.kal .kc.k-Izin{background:#f5a524;color:#3d2a00}
+.k-Sakit,.kal .kc.k-Sakit{background:#2f7df6;color:#fff}
+.k-Alpa,.kal .kc.k-Alpa{background:#e5484d;color:#fff}
+.kal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:4px 0 8px}
+.kal .kh{text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:2px 0}
+.kal .kc{text-align:center;font-size:13px;font-weight:700;padding:7px 0;border-radius:10px;background:var(--field);color:var(--ink2)}
+.kal .kh.kw{color:var(--bad)}
+.kal .kc.kw{background:rgba(229,72,77,.10);color:var(--bad);font-weight:600}
+.kleg i.lib{background:rgba(229,72,77,.18)}
+.tb th.wk{color:var(--bad);background:rgba(229,72,77,.12)}
+.tb td.wk{background:rgba(229,72,77,.08)}
+.kleg{display:flex;flex-wrap:wrap;gap:10px;font-size:11.5px;font-weight:600;color:var(--muted);margin:0 0 8px}
+.kleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.tbw{overflow-x:auto;margin-top:8px;border:1px solid var(--line);border-radius:12px}
+.tb{border-collapse:collapse;font-size:12px;width:100%}
+.tb th,.tb td{padding:5px 4px;text-align:center;border-bottom:1px solid var(--line);min-width:24px}
+.tb th{background:var(--field);font-weight:800;color:var(--ink2)}
+.tb td:first-child,.tb th:first-child{position:sticky;left:0;background:var(--card);text-align:left;min-width:110px;padding-left:8px;font-weight:700;white-space:nowrap;z-index:1}
+.tb th:first-child{background:var(--field)}
+.tb td.sum{font-weight:800}
+.tb tr.rendah td:first-child{color:var(--bad)}
+.tb tr.rendah td.pr{color:var(--bad);font-weight:800}
+.tbbar{display:flex;gap:8px}.tbbar button{margin-top:0}
+#pers{flex:none;margin:0 0 8px}
+#pers .pt{font-size:12.5px;font-weight:700;color:var(--ink2);margin-bottom:4px}
+#pers .pb{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+#pers .pb i{display:block;height:100%;width:0;background:var(--ok);border-radius:99px;transition:width .3s}
+#filt{display:flex;gap:8px;margin-top:8px}
+#filt input{margin:0;padding:9px 12px;flex:1;min-width:0}
+#filt select{padding:9px 8px}
+.hisa{display:none;gap:4px}
+@media (min-width:900px){
+  .hisa{display:flex}
+  #listSiswa .siswa select{display:none}
+  #vDash .hisa button.mini{width:34px;padding:7px 0;font-size:13px;margin:0}
+  .hisa button.on.hs-Hadir{background:var(--ok);color:#fff}
+  .hisa button.on.hs-Izin{background:var(--accent);color:#4a3600}
+  .hisa button.on.hs-Sakit{background:var(--brand);color:#fff}
+  .hisa button.on.hs-Alpa{background:var(--bad);color:#fff}
+  body.app #vRekap{max-width:1000px}
+  .wrap:has(#vKRekap:not(.hidden)){max-width:1000px}
+}
 </style>
 
 <script>
@@ -1074,8 +1119,7 @@ function terapkan(){
 }
 terapkan();
 
-// ---------- bunyi tombol PIN: pilihan nada (atur di Pengaturan) ----------
-// t = bentuk gelombang, f1 -> f2 = nada awal ke akhir (Hz), d = lama (detik), v = kerasnya (0.1 pelan ... 1 keras)
+// ---------- bunyi tombol PIN ----------
 var NADA = {
   tek:    { nama:"Tek (bawaan)",   t:"square",   f1:1400, f2:900,  d:0.09, v:0.30 },
   pop:    { nama:"Pop",            t:"sine",     f1:700,  f2:220,  d:0.10, v:0.80 },
@@ -1103,15 +1147,14 @@ function klik(){
   try{ if(navigator.vibrate) navigator.vibrate(12); }catch(e){}
 }
 
-// ---------- login: pilih nama lalu PIN (guru, kepala sekolah, wali) ----------
+// ---------- login: pilih nama lalu PIN (otomatis masuk) ----------
 var PINAKTIF = null;
-var PIN_DEFAULT = 6;   // panjang PIN bila server tidak memberi tahu
-var BACK = {};         // tujuan tombol Kembali untuk tiap kotak login
+var PIN_DEFAULT = 6;
+var BACK = {};
 window.kembaliAkun = function(id){
   var f = BACK[id];
   if(f) f(); else pilih("vPilih");
 };
-// pasang tombol Kembali di 3 halaman login (tidak perlu mengubah HTML)
 function pasangKembali(viewId, boxId){
   var bs = $(viewId).querySelectorAll("button.gray"), b = bs[bs.length - 1];
   if(b){ b.onclick = function(){ kembaliAkun(boxId); }; }
@@ -1120,7 +1163,6 @@ pasangKembali("vLogin", "gBox");
 pasangKembali("vKLogin", "kBox");
 pasangKembali("vWali", "wBox");
 
-// PIN langsung diproses begitu jumlah angkanya lengkap (tanpa tombol Masuk)
 function renderPin(box, o){
   var pin = "", sibuk = false, N = o.panjang || PIN_DEFAULT;
   box.innerHTML = '<div class="pn"><b></b><small></small></div><div class="pd"></div><div class="pad"></div>';
@@ -1141,7 +1183,7 @@ function renderPin(box, o){
     else if(k === "⌫") pin = pin.slice(0, -1);
     else if(pin.length < N) pin += k;
     gambar();
-    if(pin.length === N) setTimeout(kirim, 180);   // jeda singkat agar titik terakhir terlihat terisi
+    if(pin.length === N) setTimeout(kirim, 180);
   }
   pad.onclick = function(e){ var k = e.target.getAttribute("data-k"); if(k) tekan(k); };
   BACK[box.id] = o.onBack;
@@ -1174,7 +1216,6 @@ function muatDaftar(box, act, msg, fn){
     fn(r);
   }).catch(function(e){ say(msg, galat(e), "err"); });
 }
-// akun (guru / kepala sekolah): pilih nama, lalu PIN. Kembali dari PIN -> daftar nama
 function loginAkun(act, box, msg, daftar, sukses){
   function muat(){ muatDaftar($(box), daftar.act, $(msg), function(r){
     daftarNama($(box), r[daftar.key].map(function(g){ return { t:g.nama, s:g.kelas ? "Kelas " + g.kelas : "", g:g }; }),
@@ -1200,7 +1241,6 @@ var muatKepsek = loginAkun("loginKepsek", "kBox", "kLoginMsg", { act:"daftarKeps
   sessionStorage.setItem("sesi", JSON.stringify({ role:"kepsek", token:K.token, nama:K.nama }));
   openKepsek();
 });
-// wali murid: kelas -> murid -> PIN. Kembali dari PIN -> pilih kelas
 var WL = [];
 function muatKelas(){
   muatDaftar($("wBox"), "daftarKelas", $("wMsg"), function(r){
@@ -1233,6 +1273,119 @@ function wPin(k, nama){
 var tKeluar = $("vDash").querySelector("button.red"); if(tKeluar) tKeluar.remove();
 var tRekap = $("vDash").querySelector('button[onclick="bukaRekap()"]'); if(tRekap) tRekap.remove();
 
+// ---------- REKAP: kalender per murid (guru, kepala sekolah, wali) ----------
+var HARI = ["Sen","Sel","Rab","Kam","Jum","Sab","Min"];
+var BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+function namaBulan(b){ return BULAN[Number(b.substring(5, 7)) - 1] + " " + b.substring(0, 4); }
+function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
+function persen(h){ var t = h.Hadir + h.Izin + h.Sakit + h.Alpa; return t ? Math.round(h.Hadir * 100 / t) : -1; }
+
+tampilRekap = function(r, eR, eL){
+  var h = r.hitung, pr = persen(h);
+  eR.textContent = r.nama + ": Hadir " + h.Hadir + " | Izin " + h.Izin + " | Sakit " + h.Sakit + " | Alpa " + h.Alpa +
+    (pr >= 0 ? " | " + pr + "% hadir" : "");
+  eL.innerHTML = "";
+  if(!r.list.length){ eL.textContent = "Belum ada catatan absen di bulan ini."; return; }
+  var by = {}; r.list.forEach(function(x){ by[Number(x.key.substring(8, 10))] = x; });
+  var y = Number(r.bulan.substring(0, 4)), m = Number(r.bulan.substring(5, 7));
+  var n = new Date(y, m, 0).getDate(), off = (new Date(y, m - 1, 1).getDay() + 6) % 7;
+  var cal = document.createElement("div"); cal.className = "kal";
+  HARI.forEach(function(d, i){ var e = document.createElement("div"); e.className = "kh" + (i >= 5 ? " kw" : ""); e.textContent = d; cal.appendChild(e); });
+  for(var i = 0; i < off; i++) cal.appendChild(document.createElement("div"));
+  for(var t = 1; t <= n; t++){
+    var c = document.createElement("div"), x = by[t];
+    var libur = (off + t - 1) % 7 >= 5;
+    c.className = "kc" + (x ? " k-" + x.status : (libur ? " kw" : ""));
+    c.textContent = t;
+    if(x) c.title = x.status + " (" + x.jam + ")"; else if(libur) c.title = "Libur (Sabtu/Minggu)";
+    cal.appendChild(c);
+  }
+  eL.appendChild(cal);
+  var lg = document.createElement("div"); lg.className = "kleg";
+  lg.innerHTML = '<span><i class="k-Hadir"></i>Hadir</span><span><i class="k-Izin"></i>Izin</span><span><i class="k-Sakit"></i>Sakit</span><span><i class="k-Alpa"></i>Alpa</span><span><i class="lib"></i>Libur (Sabtu/Minggu)</span>';
+  eL.appendChild(lg);
+  r.list.forEach(function(x){ baris(eL, x.tanggal, x.status + " (" + x.jam + ")"); });
+};
+
+// ---------- REKAP: tabel kelas per bulan + unduh Excel / cetak ----------
+function htmlTabel(r){
+  var y = Number(r.bulan.substring(0, 4)), m = Number(r.bulan.substring(5, 7));
+  function wk(d){ var w = new Date(y, m - 1, d).getDay(); return w === 0 || w === 6 ? "wk" : ""; }
+  var h = '<table class="tb"><thead><tr><th>Nama</th>', d;
+  for(d = 1; d <= r.hari; d++) h += '<th class="' + wk(d) + '">' + d + "</th>";
+  h += "<th>H</th><th>I</th><th>S</th><th>A</th><th>%</th></tr></thead><tbody>";
+  r.siswa.forEach(function(s){
+    var c = s.hitung, pr = persen(c);
+    h += '<tr class="' + (pr >= 0 && pr < 75 ? "rendah" : "") + '"><td>' + esc(s.nama) + "</td>";
+    for(d = 1; d <= r.hari; d++){ var st = s.hari[d]; h += '<td class="' + (st ? "k-" + st : wk(d)) + '">' + (st ? st.charAt(0) : "") + "</td>"; }
+    h += '<td class="sum">' + c.Hadir + '</td><td class="sum">' + c.Izin + '</td><td class="sum">' + c.Sakit + '</td><td class="sum">' + c.Alpa +
+         '</td><td class="sum pr">' + (pr >= 0 ? pr + "%" : "-") + "</td></tr>";
+  });
+  return h + "</tbody></table>";
+}
+function unduhCSV(r){
+  var L = [], hd = ["Nama"], d;
+  for(d = 1; d <= r.hari; d++) hd.push(d);
+  hd.push("Hadir", "Izin", "Sakit", "Alpa", "% Hadir"); L.push(hd);
+  r.siswa.forEach(function(s){
+    var row = [s.nama], c = s.hitung, pr = persen(c);
+    for(d = 1; d <= r.hari; d++) row.push(s.hari[d] ? s.hari[d].charAt(0) : "");
+    row.push(c.Hadir, c.Izin, c.Sakit, c.Alpa, pr >= 0 ? pr + "%" : "-"); L.push(row);
+  });
+  var csv = "\ufeff" + L.map(function(a){ return a.map(function(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }).join(";"); }).join("\r\n");
+  var a = document.createElement("a"), url = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8" }));
+  a.href = url; a.download = "Absensi " + r.kelas + " " + r.bulan + ".csv";
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+function cetakTabel(r){
+  var w = window.open("", "_blank");
+  if(!w){ alert("Pop-up diblokir. Izinkan pop-up untuk situs ini lalu coba lagi."); return; }
+  w.document.write('<html><head><title>Absensi ' + esc(r.kelas) + ' ' + r.bulan + '</title><style>' +
+    '@page{size:landscape;margin:10mm}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    'body{font-family:Arial,sans-serif;font-size:11px}h3{margin:0 0 8px}' +
+    'table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:2px 3px;text-align:center}' +
+    'td:first-child,th:first-child{text-align:left;white-space:nowrap}th{background:#eee}' +
+    '.wk{background:#f3d9da}th.wk{color:#b3262b}.k-Hadir{background:#16a679;color:#fff}.k-Izin{background:#f5a524;color:#3d2a00}.k-Sakit{background:#2f7df6;color:#fff}.k-Alpa{background:#e5484d;color:#fff}' +
+    '.rendah td:first-child,.rendah .pr{color:#b3262b;font-weight:700}.sum{font-weight:700}p{margin-top:8px;color:#555}' +
+    '</style></head><body><h3>Rekap Absensi Kelas ' + esc(r.kelas) + ' - ' + namaBulan(r.bulan) + '</h3>' + htmlTabel(r) +
+    '<p>H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu (libur).</p></body></html>');
+  w.document.close(); w.focus(); setTimeout(function(){ w.print(); }, 300);
+}
+function renderTabel(box, r){
+  box.innerHTML = "";
+  var bar = document.createElement("div"); bar.className = "tbbar";
+  [["⬇️ Unduh Excel", function(){ unduhCSV(r); }], ["🖨️ Cetak", function(){ cetakTabel(r); }]].forEach(function(a){
+    var b = document.createElement("button"); b.type = "button"; b.className = "gray"; b.textContent = a[0]; b.onclick = a[1]; bar.appendChild(b); });
+  box.appendChild(bar);
+  var w = document.createElement("div"); w.className = "tbw"; w.innerHTML = htmlTabel(r); box.appendChild(w);
+  var n = document.createElement("div"); n.className = "msg"; n.style.fontSize = "11.5px";
+  n.textContent = "H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu (libur)."; box.appendChild(n);
+}
+function muatTabelGuru(){
+  var b = $("rkBulan").value; if(!b){ say($("rkMsg"), "Pilih bulan.", "err"); return; }
+  $("rkRingkas").textContent = "";
+  ambil("tabelKelas", { token:S.token, bulan:b }, $("rkMsg"), function(r){
+    $("rkRingkas").textContent = "Kelas " + r.kelas + " · " + namaBulan(r.bulan) + " · " + r.siswa.length + " murid";
+    renderTabel($("rkList"), r);
+  }, logout);
+}
+function muatTabelKepsek(){
+  var k = K.kelas[Number($("krKelas").value)], b = $("krBulan").value;
+  if(!k || !b){ say($("krMsg"), "Pilih kelas dan bulan.", "err"); return; }
+  $("krRingkas").textContent = "";
+  ambil("tabelKelas", { token:K.token, kelas:k.kelas, bulan:b }, $("krMsg"), function(r){
+    $("krRingkas").textContent = "Kelas " + r.kelas + " · " + namaBulan(r.bulan) + " · " + r.siswa.length + " murid";
+    renderTabel($("krList"), r);
+  }, logout);
+}
+function tombolTabel(sel, fn){
+  var ref = document.querySelector(sel); if(!ref) return;
+  var b = document.createElement("button"); b.type = "button"; b.className = "gray"; b.textContent = "📋 Tabel Kelas"; b.onclick = fn;
+  ref.parentNode.insertBefore(b, ref.nextSibling);
+}
+tombolTabel('#vRekap button[onclick="muatRekap()"]', muatTabelGuru);
+tombolTabel('#vKRekap button[onclick="muatKRekap()"]', muatTabelKepsek);
+
 // ---------- navigasi (sidebar laptop / bar bawah HP) ----------
 VIEWS.push("vSet");
 var nav = document.createElement("nav"); nav.id = "nav";
@@ -1261,17 +1414,63 @@ show = function(id){
   }
 };
 
-// ---------- ringkasan status ----------
+// ---------- DASHBOARD: jam digital ----------
+var jm = document.createElement("span"); jm.id = "jam";
+$("dTgl").parentNode.appendChild(document.createTextNode(" | ")); $("dTgl").parentNode.appendChild(jm);
+setInterval(function(){
+  if(jm.offsetParent) jm.textContent = new Date().toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit", second:"2-digit" }).replace(/\./g, ":");
+}, 1000);
+
+// ---------- DASHBOARD: ringkasan + persentase kehadiran ----------
 var st = document.createElement("div"); st.id = "stat";
 $("vDash").insertBefore(st, $("vDash").querySelector(".card"));
+var pers = document.createElement("div"); pers.id = "pers"; pers.innerHTML = '<div class="pt"></div><div class="pb"><i></i></div>';
+st.parentNode.insertBefore(pers, st.nextSibling);
 function stat(){
   var c = { Hadir:0, Izin:0, Sakit:0, Alpa:0, Belum:0 };
   S.siswa.forEach(function(x){ c[c[x.nilai] !== undefined ? x.nilai : "Belum"]++; });
   st.innerHTML = Object.keys(c).map(function(k, i){ return '<div class="c' + i + '"><b>' + c[k] + '</b><small>' + k + '</small></div>'; }).join("");
+  var n = S.siswa.length, p = n ? Math.round(c.Hadir * 100 / n) : 0;
+  pers.querySelector(".pt").textContent = "Kehadiran hari ini: " + c.Hadir + " dari " + n + " murid (" + p + "%)";
+  pers.querySelector("i").style.width = p + "%";
 }
-var _rs = renderSiswa; renderSiswa = function(){ _rs(); stat(); };
-var _ss = setSemua; setSemua = function(s){ _ss(s); stat(); };
-$("listSiswa").addEventListener("change", stat);
+
+// ---------- DASHBOARD: cari & saring daftar murid ----------
+var filt = document.createElement("div"); filt.id = "filt";
+filt.innerHTML = '<input type="text" id="cari" placeholder="🔍 Cari nama murid"><select id="fSt">' +
+  '<option value="">Semua</option><option value="_belum">Belum absen</option><option>Hadir</option><option>Izin</option><option>Sakit</option><option>Alpa</option></select>';
+$("listSiswa").parentNode.insertBefore(filt, $("listSiswa"));
+function saring(){
+  var q = $("cari").value.trim().toLowerCase(), f = $("fSt").value, rows = $("listSiswa").children;
+  S.siswa.forEach(function(x, i){
+    var r = rows[i]; if(!r || !r.classList.contains("siswa")) return;
+    var ok = (!q || x.nama.toLowerCase().indexOf(q) >= 0) && (!f || (f === "_belum" ? !x.nilai : x.nilai === f));
+    r.style.display = ok ? "" : "none";
+  });
+}
+$("cari").addEventListener("input", saring); $("fSt").addEventListener("change", saring);
+
+// ---------- DASHBOARD: tombol status H / I / S / A (tampil di laptop) ----------
+function seg(){
+  var rows = $("listSiswa").children;
+  S.siswa.forEach(function(x, i){
+    var row = rows[i]; if(!row || !x.el) return;
+    var g = row.querySelector(".hisa");
+    if(!g){
+      g = document.createElement("div"); g.className = "hisa";
+      [["Hadir","H"],["Izin","I"],["Sakit","S"],["Alpa","A"]].forEach(function(a){
+        var b = document.createElement("button"); b.type = "button"; b.className = "mini gray hs-" + a[0]; b.textContent = a[1]; b.title = a[0];
+        b.onclick = function(){ x.nilai = (x.nilai === a[0]) ? "" : a[0]; x.el.value = x.nilai; seg(); stat(); saring(); };
+        g.appendChild(b);
+      });
+      row.insertBefore(g, x.el);
+    }
+    Array.prototype.forEach.call(g.children, function(b){ b.classList.toggle("on", b.title === x.nilai); });
+  });
+}
+var _rs = renderSiswa; renderSiswa = function(){ _rs(); seg(); stat(); saring(); };
+var _ss = setSemua; setSemua = function(s){ _ss(s); seg(); stat(); saring(); };
+$("listSiswa").addEventListener("change", function(){ seg(); stat(); saring(); });
 
 // ---------- suara mengikuti pengaturan ----------
 var _bicara = bicara, _tit = tit;
@@ -1307,7 +1506,7 @@ vs.addEventListener("click", function(e){
   simpan(); terapkan(); isiSet();
 });
 vs.addEventListener("change", function(e){
-  if(e.target.id === "setNada"){ P.nada = e.target.value; simpan(); klik(); return; }   // langsung diperdengarkan
+  if(e.target.id === "setNada"){ P.nada = e.target.value; simpan(); klik(); return; }
   var k = e.target.getAttribute("data-k"); if(k){ P[k] = e.target.checked; simpan(); terapkan(); }
 });
 
