@@ -389,7 +389,9 @@ var FACEAPI_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist
 var THRESHOLD = 0.5, MARGIN = 0.03, JUMLAH = 3, JEDA = 1000;
 var S = { token:"", nama:"", kelas:"", mode:"", target:"", siswa:[], samples:[], selesai:{}, scanning:false, lastUcapan:"" };
 var K = { token:"", nama:"", kelas:[] }, W = { token:"", nama:"", kelas:"" };
-var modelsReady = false, stream = null, audioCtx = null, audioTit = new Audio("bunyi.mp3");
+// nama file suara yang diputar saat PIN benar dan masuk beranda (taruh file di folder yang sama dengan index.html)
+var SUARA_MASUK = "masuk.mp3";
+var modelsReady = false, stream = null, audioCtx = null, audioTit = new Audio("bunyi.mp3"), audioMasuk = new Audio(SUARA_MASUK);
 var $ = function(i){ return document.getElementById(i); };
 var COOLDOWN = 6000, terakhir = {};   // jeda (ms) sebelum murid yang sama boleh berbunyi lagi
 var VIEWS = ["vPilih","vLogin","vKLogin","vWali","vWaliHasil","vKepsek","vKRekap","vCam","vDash","vRekap"];
@@ -465,8 +467,16 @@ function beep(){
 function tit(){
   try{ audioTit.currentTime = 0; var p = audioTit.play(); if(p && p.catch) p.catch(beep); }catch(e){ beep(); }
 }
+function bunyiMasuk(){
+  try{ audioMasuk.muted = false; audioMasuk.currentTime = 0; var p = audioMasuk.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+}
 function unlockSuara(){
   initAudio();
+  try{
+    audioMasuk.muted = true; var pm = audioMasuk.play();
+    if(pm && pm.then) pm.then(function(){ audioMasuk.pause(); audioMasuk.currentTime = 0; audioMasuk.muted = false; })
+                       .catch(function(){ audioMasuk.muted = false; });
+  }catch(e){}
   try{
     audioTit.muted = true; var p = audioTit.play();
     if(p && p.then) p.then(function(){ audioTit.pause(); audioTit.currentTime = 0; audioTit.muted = false; })
@@ -1240,7 +1250,7 @@ function loginAkun(act, box, msg, daftar, sukses){
       unlockSuara(); say($(msg), "Memproses login...", "info");
       api(act, { username:g.username, password:p }).then(function(r){
         if(!r || r.status !== "success"){ say($(msg), (r && r.message) || "Login gagal", "err"); reset(); return; }
-        say($(msg), ""); sukses(r);
+        say($(msg), ""); bunyiMasuk(); sukses(r);
       }).catch(function(e){ say($(msg), galat(e), "err"); reset(); });
     }});
   }
@@ -1279,7 +1289,7 @@ function wPin(k, nama){
         W.token = r.token; W.nama = r.nama; W.kelas = r.kelas;
         $("wJudul").textContent = "Absensi " + r.nama; $("wInfo").textContent = "Kelas " + r.kelas;
         $("wBulan").value = bln(); $("wrRingkas").textContent = ""; $("wrList").innerHTML = ""; say($("wrMsg"), "");
-        say(msg, ""); show("vWaliHasil"); muatRekapWali();
+        say(msg, ""); bunyiMasuk(); show("vWaliHasil"); muatRekapWali();
       }).catch(function(e){ say(msg, galat(e), "err"); reset(); });
     }});
 }
