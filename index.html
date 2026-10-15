@@ -980,49 +980,78 @@ $("fileCam").onchange = function(){
 cekServer();
 </script>
 <style>
-/* ===== v4: kalender, tabel kelas, dashboard ===== */
-.k-Hadir,.kal .kc.k-Hadir{background:#16a679;color:#fff}
-.k-Izin,.kal .kc.k-Izin{background:#f5a524;color:#3d2a00}
-.k-Sakit,.kal .kc.k-Sakit{background:#2f7df6;color:#fff}
-.k-Alpa,.kal .kc.k-Alpa{background:#e5484d;color:#fff}
-.kal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:4px 0 8px}
-.kal .kh{text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:2px 0}
-.kal .kc{text-align:center;font-size:13px;font-weight:700;padding:7px 0;border-radius:10px;background:var(--field);color:var(--ink2)}
-.kal .kh.kw{color:var(--bad)}
-.kal .kc.kw{background:rgba(229,72,77,.10);color:var(--bad);font-weight:600}
-.kleg i.lib{background:rgba(229,72,77,.18)}
-.tb th.wk{color:var(--bad);background:rgba(229,72,77,.12)}
-.tb td.wk{background:rgba(229,72,77,.08)}
-.kleg{display:flex;flex-wrap:wrap;gap:10px;font-size:11.5px;font-weight:600;color:var(--muted);margin:0 0 8px}
-.kleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
-.tbw{overflow-x:auto;margin-top:8px;border:1px solid var(--line);border-radius:12px}
-.tb{border-collapse:collapse;font-size:12px;width:100%}
-.tb th,.tb td{padding:5px 4px;text-align:center;border-bottom:1px solid var(--line);min-width:24px}
-.tb th{background:var(--field);font-weight:800;color:var(--ink2)}
-.tb td:first-child,.tb th:first-child{position:sticky;left:0;background:var(--card);text-align:left;min-width:110px;padding-left:8px;font-weight:700;white-space:nowrap;z-index:1}
-.tb th:first-child{background:var(--field)}
-.tb td.sum{font-weight:800}
-.tb tr.rendah td:first-child{color:var(--bad)}
-.tb tr.rendah td.pr{color:var(--bad);font-weight:800}
-.tbbar{display:flex;gap:8px}.tbbar button{margin-top:0}
-#pers{flex:none;margin:0 0 8px}
-#pers .pt{font-size:12.5px;font-weight:700;color:var(--ink2);margin-bottom:4px}
-#pers .pb{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
-#pers .pb i{display:block;height:100%;width:0;background:var(--ok);border-radius:99px;transition:width .3s}
-#filt{display:flex;gap:8px;margin-top:8px}
-#filt input{margin:0;padding:9px 12px;flex:1;min-width:0}
-#filt select{padding:9px 8px}
-.hisa{display:none;gap:4px}
+/* tema & mode gelap */
+body{--brand-dark:#1b7fd0;--g1:#2f7df6;--g2:#5b9dff}
+body .head{background:linear-gradient(135deg,var(--g1),var(--g2))}
+button:not(.gray):not(.red):not(.green):not(.purple):not(.role):not(.nb):not(.nb2):not([data-k]):not(.sw):hover{background:var(--brand-dark)}
+body.gelap{color-scheme:dark;--bg:#0f1624;--card:#17213a;--ink:#e8eefb;--ink2:#b5c2d9;--muted:#8d9bb5;--line:#27344f;--field:#1f2b47;--bad-soft:#3a1f27}
+
+/* login nama + PIN */
+.pn{text-align:center;margin:2px 0 6px}.pn b{display:block;font-size:17px;font-weight:800}.pn small{color:var(--muted);font-weight:600;font-size:13px}
+.pd{display:flex;justify-content:center;gap:12px;margin:10px 0 14px}
+.pd i{width:14px;height:14px;border-radius:50%;border:2px solid var(--brand)}.pd i.on{background:var(--brand)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:auto}
+.pad button{margin:0;width:auto;padding:13px 0;font-size:21px;font-weight:700;background:var(--field);color:var(--ink);border-radius:18px}
+.pad button:hover{background:var(--line)}
+.pad button:active{background:var(--brand);color:#fff}
+.lead2{text-align:center;font-size:14px;font-weight:700;color:var(--ink2);margin:0 0 10px}
+.nlist{display:flex;flex-direction:column;gap:8px;max-height:48vh;max-height:48dvh;overflow-y:auto}
+.nb2{display:flex;align-items:center;gap:12px;text-align:left;margin:0;padding:11px 14px;background:var(--field);color:var(--ink);border-radius:18px;box-shadow:none;width:100%}
+.nb2:hover{background:var(--brand-soft)}
+.nb2 .av{flex:0 0 40px;height:40px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.nb2 b{display:block;font-size:15px}.nb2 small{color:var(--muted);font-weight:600;font-size:12px}
+
+/* navigasi: bawah di HP, sidebar kiri di laptop */
+#nav{display:none;position:fixed;z-index:50;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));justify-content:space-around;box-shadow:0 -4px 16px rgba(15,27,45,.08)}
+body.app #nav{display:flex}
+body.app{padding-bottom:84px}
+#nav .nh{display:none}
+#nav .nb{flex:1;width:auto;margin:0;padding:6px 2px;background:none;color:var(--muted);box-shadow:none;border-radius:14px;
+  font-size:10.5px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px}
+#nav .nb span{font-size:20px;line-height:1}
+#nav .nb:hover{background:var(--field)}
+#nav .nb.on{color:var(--brand);background:var(--brand-soft)}
+#nav .nb.out{color:var(--bad)}
+body.app #vDash:not(.hidden){height:calc(100vh - 104px);height:calc(100dvh - 104px)}
+body.app #vRekap:not(.hidden),body.app #vCam.aktif:not(.hidden){max-height:calc(100vh - 104px);max-height:calc(100dvh - 104px)}
+#vSet:not(.hidden){max-height:calc(100vh - 104px);max-height:calc(100dvh - 104px);overflow-y:auto}
+
+/* ringkasan */
+#stat{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px;flex:none}
+#stat div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 2px;text-align:center}
+#stat b{display:block;font-size:17px;font-weight:800;line-height:1.1}
+#stat small{font-size:10.5px;font-weight:700;color:var(--muted)}
+#stat .c0 b{color:var(--ok)}#stat .c1 b{color:var(--brand)}#stat .c2 b{color:var(--accent)}#stat .c3 b{color:var(--bad)}#stat .c4 b{color:var(--muted)}
+
+/* pengaturan */
+#vSet h4{margin:18px 0 8px;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+#vSet h4:first-of-type{margin-top:4px}
+#vSet .row{display:flex;gap:10px;align-items:center}
+#vSet .sw{width:38px;height:38px;border-radius:50%;padding:0;margin:0;box-shadow:none;border:3px solid transparent}
+#vSet .sw.on{border-color:var(--ink)}
+#vSet .seg{flex:1;margin:0;background:var(--field);color:var(--ink2);box-shadow:none}
+#vSet .seg.on{background:var(--brand);color:#fff}
+#vSet .tg{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px;font-weight:600}
+#vSet .tg input{width:22px;height:22px;accent-color:var(--brand)}
+body.ringkas #listSiswa small{display:none}
+
 @media (min-width:900px){
-  .hisa{display:flex}
-  #listSiswa .siswa select{display:none}
-  #vDash .hisa button.mini{width:34px;padding:7px 0;font-size:13px;margin:0}
-  .hisa button.on.hs-Hadir{background:var(--ok);color:#fff}
-  .hisa button.on.hs-Izin{background:var(--accent);color:#4a3600}
-  .hisa button.on.hs-Sakit{background:var(--brand);color:#fff}
-  .hisa button.on.hs-Alpa{background:var(--bad);color:#fff}
-  body.app #vRekap{max-width:1000px}
-  .wrap:has(#vKRekap:not(.hidden)){max-width:1000px}
+  #nav{top:0;right:auto;width:248px;flex-direction:column;justify-content:flex-start;gap:6px;padding:22px 14px;border-top:0;border-right:1px solid var(--line);box-shadow:none}
+  #nav .nh{display:flex;align-items:center;gap:10px;padding:0 6px 16px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+  #nav .nh img{width:46px;height:46px;object-fit:contain}
+  #nav .nh b{display:block;font-size:14.5px;line-height:1.2}
+  #nav .nh small{font-size:11.5px;color:var(--muted);font-weight:600}
+  #nav .nb{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:12px;font-size:14.5px;padding:12px 14px}
+  #nav .nb.out{margin-top:auto}
+  body.app{padding:24px 24px 24px 272px}
+  body.app .wrap{max-width:1000px}
+  body.app #vDash:not(.hidden){height:calc(100vh - 48px);height:calc(100dvh - 48px)}
+  body.app #vRekap:not(.hidden),body.app #vCam.aktif:not(.hidden),#vSet:not(.hidden){max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px)}
+  body.app #vRekap,body.app #vCam,body.app #vSet{max-width:620px;width:100%;margin-left:auto;margin-right:auto}
+  body.app #listSiswa{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;align-content:start}
+  body.app .head h2{font-size:22px}
+  #stat b{font-size:22px}
 }
 </style>
 
@@ -1045,7 +1074,8 @@ function terapkan(){
 }
 terapkan();
 
-// ---------- bunyi tombol PIN ----------
+// ---------- bunyi tombol PIN: pilihan nada (atur di Pengaturan) ----------
+// t = bentuk gelombang, f1 -> f2 = nada awal ke akhir (Hz), d = lama (detik), v = kerasnya (0.1 pelan ... 1 keras)
 var NADA = {
   tek:    { nama:"Tek (bawaan)",   t:"square",   f1:1400, f2:900,  d:0.09, v:0.30 },
   pop:    { nama:"Pop",            t:"sine",     f1:700,  f2:220,  d:0.10, v:0.80 },
@@ -1073,14 +1103,15 @@ function klik(){
   try{ if(navigator.vibrate) navigator.vibrate(12); }catch(e){}
 }
 
-// ---------- login: pilih nama lalu PIN (otomatis masuk) ----------
+// ---------- login: pilih nama lalu PIN (guru, kepala sekolah, wali) ----------
 var PINAKTIF = null;
-var PIN_DEFAULT = 6;
-var BACK = {};
+var PIN_DEFAULT = 6;   // panjang PIN bila server tidak memberi tahu
+var BACK = {};         // tujuan tombol Kembali untuk tiap kotak login
 window.kembaliAkun = function(id){
   var f = BACK[id];
   if(f) f(); else pilih("vPilih");
 };
+// pasang tombol Kembali di 3 halaman login (tidak perlu mengubah HTML)
 function pasangKembali(viewId, boxId){
   var bs = $(viewId).querySelectorAll("button.gray"), b = bs[bs.length - 1];
   if(b){ b.onclick = function(){ kembaliAkun(boxId); }; }
@@ -1089,6 +1120,7 @@ pasangKembali("vLogin", "gBox");
 pasangKembali("vKLogin", "kBox");
 pasangKembali("vWali", "wBox");
 
+// PIN langsung diproses begitu jumlah angkanya lengkap (tanpa tombol Masuk)
 function renderPin(box, o){
   var pin = "", sibuk = false, N = o.panjang || PIN_DEFAULT;
   box.innerHTML = '<div class="pn"><b></b><small></small></div><div class="pd"></div><div class="pad"></div>';
@@ -1109,7 +1141,7 @@ function renderPin(box, o){
     else if(k === "⌫") pin = pin.slice(0, -1);
     else if(pin.length < N) pin += k;
     gambar();
-    if(pin.length === N) setTimeout(kirim, 180);
+    if(pin.length === N) setTimeout(kirim, 180);   // jeda singkat agar titik terakhir terlihat terisi
   }
   pad.onclick = function(e){ var k = e.target.getAttribute("data-k"); if(k) tekan(k); };
   BACK[box.id] = o.onBack;
@@ -1142,6 +1174,7 @@ function muatDaftar(box, act, msg, fn){
     fn(r);
   }).catch(function(e){ say(msg, galat(e), "err"); });
 }
+// akun (guru / kepala sekolah): pilih nama, lalu PIN. Kembali dari PIN -> daftar nama
 function loginAkun(act, box, msg, daftar, sukses){
   function muat(){ muatDaftar($(box), daftar.act, $(msg), function(r){
     daftarNama($(box), r[daftar.key].map(function(g){ return { t:g.nama, s:g.kelas ? "Kelas " + g.kelas : "", g:g }; }),
@@ -1167,6 +1200,7 @@ var muatKepsek = loginAkun("loginKepsek", "kBox", "kLoginMsg", { act:"daftarKeps
   sessionStorage.setItem("sesi", JSON.stringify({ role:"kepsek", token:K.token, nama:K.nama }));
   openKepsek();
 });
+// wali murid: kelas -> murid -> PIN. Kembali dari PIN -> pilih kelas
 var WL = [];
 function muatKelas(){
   muatDaftar($("wBox"), "daftarKelas", $("wMsg"), function(r){
@@ -1199,119 +1233,6 @@ function wPin(k, nama){
 var tKeluar = $("vDash").querySelector("button.red"); if(tKeluar) tKeluar.remove();
 var tRekap = $("vDash").querySelector('button[onclick="bukaRekap()"]'); if(tRekap) tRekap.remove();
 
-// ---------- REKAP: kalender per murid (guru, kepala sekolah, wali) ----------
-var HARI = ["Sen","Sel","Rab","Kam","Jum","Sab","Min"];
-var BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-function namaBulan(b){ return BULAN[Number(b.substring(5, 7)) - 1] + " " + b.substring(0, 4); }
-function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
-function persen(h){ var t = h.Hadir + h.Izin + h.Sakit + h.Alpa; return t ? Math.round(h.Hadir * 100 / t) : -1; }
-
-tampilRekap = function(r, eR, eL){
-  var h = r.hitung, pr = persen(h);
-  eR.textContent = r.nama + ": Hadir " + h.Hadir + " | Izin " + h.Izin + " | Sakit " + h.Sakit + " | Alpa " + h.Alpa +
-    (pr >= 0 ? " | " + pr + "% hadir" : "");
-  eL.innerHTML = "";
-  if(!r.list.length){ eL.textContent = "Belum ada catatan absen di bulan ini."; return; }
-  var by = {}; r.list.forEach(function(x){ by[Number(x.key.substring(8, 10))] = x; });
-  var y = Number(r.bulan.substring(0, 4)), m = Number(r.bulan.substring(5, 7));
-  var n = new Date(y, m, 0).getDate(), off = (new Date(y, m - 1, 1).getDay() + 6) % 7;
-  var cal = document.createElement("div"); cal.className = "kal";
-  HARI.forEach(function(d, i){ var e = document.createElement("div"); e.className = "kh" + (i >= 5 ? " kw" : ""); e.textContent = d; cal.appendChild(e); });
-  for(var i = 0; i < off; i++) cal.appendChild(document.createElement("div"));
-  for(var t = 1; t <= n; t++){
-    var c = document.createElement("div"), x = by[t];
-    var libur = (off + t - 1) % 7 >= 5;
-    c.className = "kc" + (x ? " k-" + x.status : (libur ? " kw" : ""));
-    c.textContent = t;
-    if(x) c.title = x.status + " (" + x.jam + ")"; else if(libur) c.title = "Libur (Sabtu/Minggu)";
-    cal.appendChild(c);
-  }
-  eL.appendChild(cal);
-  var lg = document.createElement("div"); lg.className = "kleg";
-  lg.innerHTML = '<span><i class="k-Hadir"></i>Hadir</span><span><i class="k-Izin"></i>Izin</span><span><i class="k-Sakit"></i>Sakit</span><span><i class="k-Alpa"></i>Alpa</span><span><i class="lib"></i>Libur (Sabtu/Minggu)</span>';
-  eL.appendChild(lg);
-  r.list.forEach(function(x){ baris(eL, x.tanggal, x.status + " (" + x.jam + ")"); });
-};
-
-// ---------- REKAP: tabel kelas per bulan + unduh Excel / cetak ----------
-function htmlTabel(r){
-  var y = Number(r.bulan.substring(0, 4)), m = Number(r.bulan.substring(5, 7));
-  function wk(d){ var w = new Date(y, m - 1, d).getDay(); return w === 0 || w === 6 ? "wk" : ""; }
-  var h = '<table class="tb"><thead><tr><th>Nama</th>', d;
-  for(d = 1; d <= r.hari; d++) h += '<th class="' + wk(d) + '">' + d + "</th>";
-  h += "<th>H</th><th>I</th><th>S</th><th>A</th><th>%</th></tr></thead><tbody>";
-  r.siswa.forEach(function(s){
-    var c = s.hitung, pr = persen(c);
-    h += '<tr class="' + (pr >= 0 && pr < 75 ? "rendah" : "") + '"><td>' + esc(s.nama) + "</td>";
-    for(d = 1; d <= r.hari; d++){ var st = s.hari[d]; h += '<td class="' + (st ? "k-" + st : wk(d)) + '">' + (st ? st.charAt(0) : "") + "</td>"; }
-    h += '<td class="sum">' + c.Hadir + '</td><td class="sum">' + c.Izin + '</td><td class="sum">' + c.Sakit + '</td><td class="sum">' + c.Alpa +
-         '</td><td class="sum pr">' + (pr >= 0 ? pr + "%" : "-") + "</td></tr>";
-  });
-  return h + "</tbody></table>";
-}
-function unduhCSV(r){
-  var L = [], hd = ["Nama"], d;
-  for(d = 1; d <= r.hari; d++) hd.push(d);
-  hd.push("Hadir", "Izin", "Sakit", "Alpa", "% Hadir"); L.push(hd);
-  r.siswa.forEach(function(s){
-    var row = [s.nama], c = s.hitung, pr = persen(c);
-    for(d = 1; d <= r.hari; d++) row.push(s.hari[d] ? s.hari[d].charAt(0) : "");
-    row.push(c.Hadir, c.Izin, c.Sakit, c.Alpa, pr >= 0 ? pr + "%" : "-"); L.push(row);
-  });
-  var csv = "\ufeff" + L.map(function(a){ return a.map(function(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }).join(";"); }).join("\r\n");
-  var a = document.createElement("a"), url = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8" }));
-  a.href = url; a.download = "Absensi " + r.kelas + " " + r.bulan + ".csv";
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
-}
-function cetakTabel(r){
-  var w = window.open("", "_blank");
-  if(!w){ alert("Pop-up diblokir. Izinkan pop-up untuk situs ini lalu coba lagi."); return; }
-  w.document.write('<html><head><title>Absensi ' + esc(r.kelas) + ' ' + r.bulan + '</title><style>' +
-    '@page{size:landscape;margin:10mm}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
-    'body{font-family:Arial,sans-serif;font-size:11px}h3{margin:0 0 8px}' +
-    'table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:2px 3px;text-align:center}' +
-    'td:first-child,th:first-child{text-align:left;white-space:nowrap}th{background:#eee}' +
-    '.wk{background:#f3d9da}th.wk{color:#b3262b}.k-Hadir{background:#16a679;color:#fff}.k-Izin{background:#f5a524;color:#3d2a00}.k-Sakit{background:#2f7df6;color:#fff}.k-Alpa{background:#e5484d;color:#fff}' +
-    '.rendah td:first-child,.rendah .pr{color:#b3262b;font-weight:700}.sum{font-weight:700}p{margin-top:8px;color:#555}' +
-    '</style></head><body><h3>Rekap Absensi Kelas ' + esc(r.kelas) + ' - ' + namaBulan(r.bulan) + '</h3>' + htmlTabel(r) +
-    '<p>H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu (libur).</p></body></html>');
-  w.document.close(); w.focus(); setTimeout(function(){ w.print(); }, 300);
-}
-function renderTabel(box, r){
-  box.innerHTML = "";
-  var bar = document.createElement("div"); bar.className = "tbbar";
-  [["⬇️ Unduh Excel", function(){ unduhCSV(r); }], ["🖨️ Cetak", function(){ cetakTabel(r); }]].forEach(function(a){
-    var b = document.createElement("button"); b.type = "button"; b.className = "gray"; b.textContent = a[0]; b.onclick = a[1]; bar.appendChild(b); });
-  box.appendChild(bar);
-  var w = document.createElement("div"); w.className = "tbw"; w.innerHTML = htmlTabel(r); box.appendChild(w);
-  var n = document.createElement("div"); n.className = "msg"; n.style.fontSize = "11.5px";
-  n.textContent = "H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu (libur)."; box.appendChild(n);
-}
-function muatTabelGuru(){
-  var b = $("rkBulan").value; if(!b){ say($("rkMsg"), "Pilih bulan.", "err"); return; }
-  $("rkRingkas").textContent = "";
-  ambil("tabelKelas", { token:S.token, bulan:b }, $("rkMsg"), function(r){
-    $("rkRingkas").textContent = "Kelas " + r.kelas + " · " + namaBulan(r.bulan) + " · " + r.siswa.length + " murid";
-    renderTabel($("rkList"), r);
-  }, logout);
-}
-function muatTabelKepsek(){
-  var k = K.kelas[Number($("krKelas").value)], b = $("krBulan").value;
-  if(!k || !b){ say($("krMsg"), "Pilih kelas dan bulan.", "err"); return; }
-  $("krRingkas").textContent = "";
-  ambil("tabelKelas", { token:K.token, kelas:k.kelas, bulan:b }, $("krMsg"), function(r){
-    $("krRingkas").textContent = "Kelas " + r.kelas + " · " + namaBulan(r.bulan) + " · " + r.siswa.length + " murid";
-    renderTabel($("krList"), r);
-  }, logout);
-}
-function tombolTabel(sel, fn){
-  var ref = document.querySelector(sel); if(!ref) return;
-  var b = document.createElement("button"); b.type = "button"; b.className = "gray"; b.textContent = "📋 Tabel Kelas"; b.onclick = fn;
-  ref.parentNode.insertBefore(b, ref.nextSibling);
-}
-tombolTabel('#vRekap button[onclick="muatRekap()"]', muatTabelGuru);
-tombolTabel('#vKRekap button[onclick="muatKRekap()"]', muatTabelKepsek);
-
 // ---------- navigasi (sidebar laptop / bar bawah HP) ----------
 VIEWS.push("vSet");
 var nav = document.createElement("nav"); nav.id = "nav";
@@ -1340,63 +1261,17 @@ show = function(id){
   }
 };
 
-// ---------- DASHBOARD: jam digital ----------
-var jm = document.createElement("span"); jm.id = "jam";
-$("dTgl").parentNode.appendChild(document.createTextNode(" | ")); $("dTgl").parentNode.appendChild(jm);
-setInterval(function(){
-  if(jm.offsetParent) jm.textContent = new Date().toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit", second:"2-digit" }).replace(/\./g, ":");
-}, 1000);
-
-// ---------- DASHBOARD: ringkasan + persentase kehadiran ----------
+// ---------- ringkasan status ----------
 var st = document.createElement("div"); st.id = "stat";
 $("vDash").insertBefore(st, $("vDash").querySelector(".card"));
-var pers = document.createElement("div"); pers.id = "pers"; pers.innerHTML = '<div class="pt"></div><div class="pb"><i></i></div>';
-st.parentNode.insertBefore(pers, st.nextSibling);
 function stat(){
   var c = { Hadir:0, Izin:0, Sakit:0, Alpa:0, Belum:0 };
   S.siswa.forEach(function(x){ c[c[x.nilai] !== undefined ? x.nilai : "Belum"]++; });
   st.innerHTML = Object.keys(c).map(function(k, i){ return '<div class="c' + i + '"><b>' + c[k] + '</b><small>' + k + '</small></div>'; }).join("");
-  var n = S.siswa.length, p = n ? Math.round(c.Hadir * 100 / n) : 0;
-  pers.querySelector(".pt").textContent = "Kehadiran hari ini: " + c.Hadir + " dari " + n + " murid (" + p + "%)";
-  pers.querySelector("i").style.width = p + "%";
 }
-
-// ---------- DASHBOARD: cari & saring daftar murid ----------
-var filt = document.createElement("div"); filt.id = "filt";
-filt.innerHTML = '<input type="text" id="cari" placeholder="🔍 Cari nama murid"><select id="fSt">' +
-  '<option value="">Semua</option><option value="_belum">Belum absen</option><option>Hadir</option><option>Izin</option><option>Sakit</option><option>Alpa</option></select>';
-$("listSiswa").parentNode.insertBefore(filt, $("listSiswa"));
-function saring(){
-  var q = $("cari").value.trim().toLowerCase(), f = $("fSt").value, rows = $("listSiswa").children;
-  S.siswa.forEach(function(x, i){
-    var r = rows[i]; if(!r || !r.classList.contains("siswa")) return;
-    var ok = (!q || x.nama.toLowerCase().indexOf(q) >= 0) && (!f || (f === "_belum" ? !x.nilai : x.nilai === f));
-    r.style.display = ok ? "" : "none";
-  });
-}
-$("cari").addEventListener("input", saring); $("fSt").addEventListener("change", saring);
-
-// ---------- DASHBOARD: tombol status H / I / S / A (tampil di laptop) ----------
-function seg(){
-  var rows = $("listSiswa").children;
-  S.siswa.forEach(function(x, i){
-    var row = rows[i]; if(!row || !x.el) return;
-    var g = row.querySelector(".hisa");
-    if(!g){
-      g = document.createElement("div"); g.className = "hisa";
-      [["Hadir","H"],["Izin","I"],["Sakit","S"],["Alpa","A"]].forEach(function(a){
-        var b = document.createElement("button"); b.type = "button"; b.className = "mini gray hs-" + a[0]; b.textContent = a[1]; b.title = a[0];
-        b.onclick = function(){ x.nilai = (x.nilai === a[0]) ? "" : a[0]; x.el.value = x.nilai; seg(); stat(); saring(); };
-        g.appendChild(b);
-      });
-      row.insertBefore(g, x.el);
-    }
-    Array.prototype.forEach.call(g.children, function(b){ b.classList.toggle("on", b.title === x.nilai); });
-  });
-}
-var _rs = renderSiswa; renderSiswa = function(){ _rs(); seg(); stat(); saring(); };
-var _ss = setSemua; setSemua = function(s){ _ss(s); seg(); stat(); saring(); };
-$("listSiswa").addEventListener("change", function(){ seg(); stat(); saring(); });
+var _rs = renderSiswa; renderSiswa = function(){ _rs(); stat(); };
+var _ss = setSemua; setSemua = function(s){ _ss(s); stat(); };
+$("listSiswa").addEventListener("change", stat);
 
 // ---------- suara mengikuti pengaturan ----------
 var _bicara = bicara, _tit = tit;
@@ -1432,7 +1307,7 @@ vs.addEventListener("click", function(e){
   simpan(); terapkan(); isiSet();
 });
 vs.addEventListener("change", function(e){
-  if(e.target.id === "setNada"){ P.nada = e.target.value; simpan(); klik(); return; }
+  if(e.target.id === "setNada"){ P.nada = e.target.value; simpan(); klik(); return; }   // langsung diperdengarkan
   var k = e.target.getAttribute("data-k"); if(k){ P[k] = e.target.checked; simpan(); terapkan(); }
 });
 
@@ -1440,4 +1315,4 @@ vs.addEventListener("change", function(e){
 if(!$("vDash").classList.contains("hidden")) show("vDash");
 }
 if(document.readyState === "complete") mulaiUI(); else window.addEventListener("load", mulaiUI);
-</script>        
+</script>
