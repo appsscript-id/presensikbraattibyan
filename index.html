@@ -5,7 +5,7 @@
 <meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2196f3">
-<title>Absensi Online KB RA At Tibyan</title>
+<title>Presensi Online KB RA At Tibyan</title>
 <link rel="icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -256,7 +256,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
  
 <div id="vPilih" class="card">
   <img src="logo.png" class="logo-login" alt="Logo sekolah" onerror="this.style.display='none'">
-  <div class="judul"><p class="t1">Absensi Online</p><p class="t2">KB RA At Tibyan</p><hr></div>
+  <div class="judul"><p class="t1">Presensi Online</p><p class="t2">KB RA At Tibyan</p><hr></div>
   <p class="lead">Masuk sebagai</p>
   <button class="role guru" onclick="pilih('vLogin')"><span class="ic">👩‍🏫</span><span class="tx"><b>Guru</b><small>Absensi &amp; scan wajah murid</small></span><span class="ar">›</span></button>
   <button class="role kepsek" onclick="pilih('vKLogin')"><span class="ic">🧕</span><span class="tx"><b>Kepala Sekolah</b><small>Ringkasan seluruh kelas</small></span><span class="ar">›</span></button>
@@ -1102,7 +1102,7 @@ body.ringkas #listSiswa small{display:none}
 
 /* ===== v5: HP - halaman bergulir normal, daftar murid & rekap tidak lagi di dalam kotak kecil ===== */
 @media (max-width:899px){
-  body{display:block !important}
+  body.app{display:block !important}
   #vDash:not(.hidden),body.app #vDash:not(.hidden){display:block !important;height:auto !important}
   #vDash .card{display:block !important;flex:none !important;min-height:0 !important}
   #vDash #listSiswa{overflow:visible !important;min-height:0 !important;max-height:none !important}
