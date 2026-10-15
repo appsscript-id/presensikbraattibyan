@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta charset="UTF-8">
 <meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1549,6 +1553,11 @@ vs.addEventListener("change", function(e){
 if(!$("vDash").classList.contains("hidden")) show("vDash");
 }
 if(document.readyState === "complete") mulaiUI(); else window.addEventListener("load", mulaiUI);
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js"); });
+}
 </script>
 </body>
 </html>
