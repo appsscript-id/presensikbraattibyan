@@ -1,9 +1,9 @@
 // Service worker Presensi KB RA At Tibyan
 // Naikkan angka versi (absen-v2, v3, ...) bila ingin memaksa HP mengambil file baru.
-var CACHE = "absen-v1";
+var CACHE = "absen-v2";
 var FILES = [
   "./", "./index.html", "./manifest.json", "./logo.png",
-  "./icon-192.png", "./icon-512.png", "./bunyi.mp3", "./masuk.mp3"
+  "./icon-192.png", "./icon-512.png", "./bunyi.mp3", "./masuk.mp3", "./salam.mp3"
 ];
 
 self.addEventListener("install", function (e) {
