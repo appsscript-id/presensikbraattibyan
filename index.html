@@ -439,9 +439,9 @@ function tampilRekap(r, eR, eL){
   eR.textContent = r.nama + ": Hadir " + h.Hadir + " | Izin " + h.Izin + " | Sakit " + h.Sakit + " | Alpa " + h.Alpa;
   eL.innerHTML = "";
   if(!r.list.length){ eL.textContent = "Belum ada catatan absen di bulan ini."; return; }
-  r.list.forEach(function(x){ baris(eL, x.tanggal, x.status + " (" + x.jam + ")"); });
+  r.list.slice().reverse().forEach(function(x){ baris(eL, x.tanggal, x.status + " (" + x.jam + ")"); });   // tanggal terbaru di atas
 }
- 
+
 function cekServer(){
   var el = $("srvStatus");
   if(API_URL.indexOf("https://script.google.com/") !== 0){ el.textContent = "API_URL belum diisi."; el.className = "msg err"; return; }
@@ -1343,7 +1343,7 @@ tampilRekap = function(r, eR, eL){
   var lg = document.createElement("div"); lg.className = "kleg";
   lg.innerHTML = '<span><i class="k-Hadir"></i>Hadir</span><span><i class="k-Izin"></i>Izin</span><span><i class="k-Sakit"></i>Sakit</span><span><i class="k-Alpa"></i>Alpa</span><span><i class="lib"></i>Libur (Sabtu/Minggu)</span>';
   eL.appendChild(lg);
-  r.list.forEach(function(x){ baris(eL, x.tanggal, x.status + " (" + x.jam + ")"); });
+  r.list.slice().reverse().forEach(function(x){ baris(eL, x.tanggal, x.status + " (" + x.jam + ")"); });   // tanggal terbaru di atas
 };
 
 // ---------- REKAP: tabel kelas per bulan + unduh Excel / cetak ----------
@@ -1553,6 +1553,27 @@ vs.addEventListener("change", function(e){
 if(!$("vDash").classList.contains("hidden")) show("vDash");
 }
 if(document.readyState === "complete") mulaiUI(); else window.addEventListener("load", mulaiUI);
+</script>
+<script>
+// suara salam saat aplikasi / link dibuka (file salam.mp3 satu folder dengan index.html)
+// Browser sering memblokir suara otomatis, jadi bila gagal, suara diputar saat sentuhan pertama.
+(function(){
+  var salam = new Audio("salam.mp3"), sudah = false;
+  var EV = ["pointerdown", "touchstart", "click", "keydown"];
+  salam.preload = "auto";
+  function selesai(){ sudah = true; EV.forEach(function(n){ document.removeEventListener(n, mainkan, true); }); }
+  function mainkan(){
+    if(sudah) return;
+    try{
+      var p = salam.play();
+      if(p && p.then) p.then(selesai).catch(function(){});   // diblokir: tunggu sentuhan pertama
+      else selesai();
+    }catch(e){}
+  }
+  salam.onerror = selesai;   // file tidak ada: berhenti mencoba
+  EV.forEach(function(n){ document.addEventListener(n, mainkan, true); });
+  mainkan();
+})();
 </script>
 <script>
 if ("serviceWorker" in navigator) {
