@@ -1058,6 +1058,17 @@ body.app #vRekap:not(.hidden),body.app #vCam.aktif:not(.hidden){max-height:calc(
 #vSet .tg input{width:22px;height:22px;accent-color:var(--brand)}
 body.ringkas #listSiswa small{display:none}
 
+/* menu Libur + pengingat belum absen */
+#vLibur:not(.hidden){max-height:calc(100vh - 104px);max-height:calc(100dvh - 104px);overflow-y:auto}
+#vLibur h4{margin:14px 0 6px;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+#vLibur .siswa.lalu{opacity:.5}
+#vLibur .siswa.kini{background:var(--brand-soft)}
+#vLibur small{display:block;color:var(--muted);font-weight:600;font-size:12px}
+#vLibur .tgl{font-weight:700;font-size:13.5px;text-align:right}
+#ingat{display:none;flex:none;margin-bottom:8px;padding:12px 14px;border-radius:var(--r-sm);background:var(--accent-soft);color:#7a4b00;border:1px solid #ffd98a;font-size:13.5px;font-weight:700;line-height:1.4}
+#ingat.on{display:block}
+body.gelap #ingat{background:rgba(255,176,32,.14);color:#ffcf70;border-color:rgba(255,176,32,.35)}
+
 @media (min-width:900px){
   #nav{top:0;right:auto;width:248px;flex-direction:column;justify-content:flex-start;gap:6px;padding:22px 14px;border-top:0;border-right:1px solid var(--line);box-shadow:none}
   #nav .nh{display:flex;align-items:center;gap:10px;padding:0 6px 16px;margin-bottom:6px;border-bottom:1px solid var(--line)}
@@ -1333,15 +1344,16 @@ tampilRekap = function(r, eR, eL){
   for(var i = 0; i < off; i++) cal.appendChild(document.createElement("div"));
   for(var t = 1; t <= n; t++){
     var c = document.createElement("div"), x = by[t];
-    var libur = (off + t - 1) % 7 >= 5;
+    var hl = LIBURMAP[r.bulan + "-" + ("0" + t).slice(-2)];
+    var libur = (off + t - 1) % 7 >= 5 || !!hl;
     c.className = "kc" + (x ? " k-" + x.status : (libur ? " kw" : ""));
     c.textContent = t;
-    if(x) c.title = x.status + " (" + x.jam + ")"; else if(libur) c.title = "Libur (Sabtu/Minggu)";
+    if(x) c.title = x.status + " (" + x.jam + ")"; else if(libur) c.title = hl || "Libur (Sabtu/Minggu)";
     cal.appendChild(c);
   }
   eL.appendChild(cal);
   var lg = document.createElement("div"); lg.className = "kleg";
-  lg.innerHTML = '<span><i class="k-Hadir"></i>Hadir</span><span><i class="k-Izin"></i>Izin</span><span><i class="k-Sakit"></i>Sakit</span><span><i class="k-Alpa"></i>Alpa</span><span><i class="lib"></i>Libur (Sabtu/Minggu)</span>';
+  lg.innerHTML = '<span><i class="k-Hadir"></i>Hadir</span><span><i class="k-Izin"></i>Izin</span><span><i class="k-Sakit"></i>Sakit</span><span><i class="k-Alpa"></i>Alpa</span><span><i class="lib"></i>Libur (Sabtu/Minggu/tanggal merah)</span>';
   eL.appendChild(lg);
   r.list.slice().reverse().forEach(function(x){ baris(eL, x.tanggal, x.status + " (" + x.jam + ")"); });   // tanggal terbaru di atas
 };
@@ -1429,15 +1441,16 @@ tombolTabel('#vKRekap button[onclick="muatKRekap()"]', muatTabelKepsek);
 VIEWS.push("vSet");
 var nav = document.createElement("nav"); nav.id = "nav";
 nav.innerHTML = '<div class="nh"><img src="logo.png" alt="" onerror="this.style.display=\'none\'"><div><b>KB RA At Tibyan</b><small id="nvNama"></small></div></div>' +
-  [["abs","🏠","Absensi"],["rek","📊","Rekap"],["set","⚙️","Pengaturan"],["out","🚪","Keluar"]].map(function(i){
+  [["abs","🏠","Absensi"],["rek","📊","Rekap"],["lib","📅","Libur"],["set","⚙️","Pengaturan"],["out","🚪","Keluar"]].map(function(i){
     return '<button type="button" class="nb' + (i[0] === "out" ? " out" : "") + '" data-go="' + i[0] + '"><span>' + i[1] + '</span>' + i[2] + '</button>'; }).join("");
 document.body.appendChild(nav);
-var PETA = { vDash:"abs", vCam:"abs", vRekap:"rek", vSet:"set" };
+var PETA = { vDash:"abs", vCam:"abs", vRekap:"rek", vLibur:"lib", vSet:"set" };
 function go(k){
   if(k === "out"){ logout(); return; }
   if(k === "abs"){ if(!$("vCam").classList.contains("hidden")) closeCam(); else show("vDash"); return; }
   stopCam();
   if(k === "rek") bukaRekap();
+  else if(k === "lib"){ tampilLibur(); show("vLibur"); }
   else if(k === "set"){ isiSet(); show("vSet"); }
 }
 nav.addEventListener("click", function(e){ var b = e.target.closest("[data-go]"); if(b) go(b.getAttribute("data-go")); });
@@ -1472,7 +1485,94 @@ function stat(){
   var n = S.siswa.length, p = n ? Math.round(c.Hadir * 100 / n) : 0;
   pers.querySelector(".pt").textContent = "Kehadiran hari ini: " + c.Hadir + " dari " + n + " murid (" + p + "%)";
   pers.querySelector("i").style.width = p + "%";
+  ingatkan();
 }
+
+// ---------- LIBUR: data dari sheet "Hari Libur" ----------
+var LIBUR = null, LIBURMAP = {}, lbLalu = false;
+function utcDari(k){ return new Date(Date.UTC(+k.substring(0, 4), +k.substring(5, 7) - 1, +k.substring(8, 10))); }
+function kunciDari(d){ return d.toISOString().substring(0, 10); }
+function tglIndo(k){ return utcDari(k).toLocaleDateString("id-ID", { timeZone:"UTC", weekday:"short", day:"numeric", month:"short" }); }
+// tanggal, hari (0=Minggu) dan menit sejak tengah malam menurut WIB, apa pun zona waktu HP
+function wibSekarang(){
+  var o = {};
+  new Intl.DateTimeFormat("en-US", { timeZone:"Asia/Jakarta", hourCycle:"h23", year:"numeric", month:"2-digit", day:"2-digit",
+    hour:"2-digit", minute:"2-digit", weekday:"short" }).formatToParts(new Date()).forEach(function(p){ o[p.type] = p.value; });
+  return { tgl:o.year + "-" + o.month + "-" + o.day, hari:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(o.weekday),
+           menit:(+o.hour % 24) * 60 + (+o.minute) };
+}
+function muatLibur(paksa){
+  if(LIBUR && !paksa) return Promise.resolve(LIBUR);
+  return api("getLibur").then(function(r){
+    if(r.status !== "success") throw new Error(r.message);
+    LIBUR = r.libur || []; LIBURMAP = {};
+    LIBUR.forEach(function(x){
+      var d = utcDari(x.mulai), e = utcDari(x.selesai), n = 0;
+      while(d <= e && n++ < 400){ LIBURMAP[kunciDari(d)] = x.ket; d.setUTCDate(d.getUTCDate() + 1); }
+    });
+    ingatkan();
+    return LIBUR;
+  });
+}
+
+// ---------- PENGINGAT: murid belum diabsen sampai pukul 08.30 (hari sekolah, bukan libur) ----------
+var BATAS_ABSEN = 8 * 60 + 30;
+var ing = document.createElement("div"); ing.id = "ingat";
+$("vDash").insertBefore(ing, st);
+function ingatkan(){
+  var n = wibSekarang(), belum = S.siswa.filter(function(x){ return !x.status; });
+  var sekolah = n.hari >= 1 && n.hari <= 5 && !LIBURMAP[n.tgl];
+  if(!S.token || !sekolah || n.menit < BATAS_ABSEN || !belum.length){ ing.className = ""; ing.textContent = ""; return; }
+  var nama = belum.slice(0, 5).map(function(x){ return x.nama; }).join(", ") + (belum.length > 5 ? " dan " + (belum.length - 5) + " lainnya" : "");
+  ing.textContent = "⏰ " + belum.length + " murid belum diabsen (sudah lewat pukul 08.30): " + nama + ".";
+  ing.className = "on";
+}
+setInterval(ingatkan, 30000);
+
+// ---------- MENU LIBUR (sidebar) ----------
+var vl = document.createElement("div"); vl.id = "vLibur"; vl.className = "card hidden";
+vl.innerHTML = '<h3>📅 Hari Libur</h3><div id="lbInfo" class="b"></div><div id="lbList"></div><div id="lbMsg" class="msg"></div>' +
+  '<button type="button" class="gray" id="lbLalu"></button><button type="button" class="gray" id="lbMuat">🔄 Muat ulang</button>' +
+  '<p style="font-size:12.5px;color:var(--muted);margin:10px 0 0">Libur sekolah dan libur lainnya ditambahkan di sheet "Hari Libur" pada spreadsheet.</p>';
+$("vDash").parentNode.insertBefore(vl, $("vDash"));
+VIEWS.push("vLibur");
+function gambarLibur(){
+  var box = $("lbList"), today = wibSekarang().tgl, info = $("lbInfo");
+  box.innerHTML = "";
+  var daftar = (LIBUR || []).filter(function(x){ return x.selesai >= today.substring(0, 4) + "-01-01"; });
+  var depan = daftar.filter(function(x){ return x.selesai >= today; });
+  var lalu = daftar.filter(function(x){ return x.selesai < today; });
+  if(!depan.length) info.textContent = "Tidak ada libur terjadwal ke depan. Tambahkan di sheet \"Hari Libur\".";
+  else {
+    var f = depan[0];
+    if(f.mulai <= today) info.textContent = "Hari ini libur: " + f.ket;
+    else info.textContent = "Libur berikutnya: " + f.ket + " (" + tglIndo(f.mulai) + "), " +
+      Math.round((utcDari(f.mulai) - utcDari(today)) / 86400000) + " hari lagi";
+  }
+  function tulis(arr, kelas){
+    var bl = "";
+    arr.forEach(function(x){
+      var b = BULAN[Number(x.mulai.substring(5, 7)) - 1] + " " + x.mulai.substring(0, 4);
+      if(b !== bl){ bl = b; var h = document.createElement("h4"); h.textContent = b; box.appendChild(h); }
+      baris(box, x.ket, x.selesai !== x.mulai ? tglIndo(x.mulai) + " – " + tglIndo(x.selesai) : tglIndo(x.mulai));
+      var row = box.lastChild, sm = document.createElement("small");
+      row.className += " " + (x.mulai <= today && x.selesai >= today ? "kini" : kelas);
+      sm.textContent = x.jenis; row.firstChild.appendChild(sm); row.lastChild.className = "tgl";
+    });
+  }
+  tulis(depan, "");
+  if(lbLalu && lalu.length){ var hl = document.createElement("h4"); hl.textContent = "Sudah lewat"; box.appendChild(hl); tulis(lalu, "lalu"); }
+  var bt = $("lbLalu"); bt.style.display = lalu.length ? "" : "none";
+  bt.textContent = lbLalu ? "Sembunyikan yang sudah lewat" : "Lihat yang sudah lewat (" + lalu.length + ")";
+}
+function tampilLibur(paksa){
+  var msg = $("lbMsg");
+  if(LIBUR) gambarLibur(); else say(msg, "Memuat...", "info");
+  muatLibur(paksa).then(function(){ gambarLibur(); say(msg, ""); }).catch(function(e){ say(msg, galat(e), "err"); });
+}
+$("lbLalu").onclick = function(){ lbLalu = !lbLalu; gambarLibur(); };
+$("lbMuat").onclick = function(){ say($("lbMsg"), "Memuat...", "info"); tampilLibur(true); };
+muatLibur().catch(function(){});
 
 // ---------- DASHBOARD: cari & saring daftar murid ----------
 var filt = document.createElement("div"); filt.id = "filt";
@@ -1526,10 +1626,32 @@ vs.innerHTML = '<h3>⚙️ Pengaturan</h3>' +
   '<label class="tg">Bunyi tit saat wajah dikenali<input type="checkbox" data-k="bunyi"></label>' +
   '<h4>Bunyi tombol PIN</h4><select id="setNada" class="full">' +
     Object.keys(NADA).map(function(k){ return '<option value="' + k + '">' + NADA[k].nama + '</option>'; }).join("") + '</select>' +
+  '<h4>Aplikasi</h4><button type="button" class="gray" id="setPasang">📲 Pasang Aplikasi</button><div id="pasangInfo" class="msg"></div>' +
   '<button type="button" class="gray" id="setTes">🔈 Tes Suara</button>' +
   '<button type="button" class="gray" id="setReset">Kembalikan ke bawaan</button>';
 $("vDash").parentNode.insertBefore(vs, $("vDash"));
+
+// ---------- tombol Pasang Aplikasi (PWA) ----------
+function isiPasang(){
+  var b = $("setPasang"); if(!b || !window.PWA) return;
+  var sudah = PWA.terpasang();
+  b.textContent = sudah ? "✅ Aplikasi sudah terpasang" : "📲 Pasang Aplikasi";
+  b.disabled = sudah;
+}
+function pasangApp(){
+  var info = $("pasangInfo");
+  if(!window.PWA){ say(info, "Fitur pasang tidak tersedia di browser ini.", "err"); return; }
+  PWA.pasang().then(function(h){
+    if(h === "ok") say(info, "Aplikasi dipasang. Cari ikon Presensi di layar utama HP.", "ok");
+    else if(h === "batal") say(info, "Pemasangan dibatalkan.", "info");
+    else if(h === "sudah") say(info, "Aplikasi sudah terpasang di perangkat ini.", "ok");
+    else if(h === "ios") say(info, "Di iPhone: buka lewat Safari, ketuk tombol Bagikan, lalu pilih Tambahkan ke Layar Utama.", "info");
+    else say(info, "Buka menu ⋮ di Chrome, lalu pilih Instal aplikasi atau Tambahkan ke layar utama. Bila pilihan itu tidak ada, muat ulang halaman lalu coba lagi.", "info");
+    isiPasang();
+  });
+}
 function isiSet(){
+  isiPasang();
   Array.prototype.forEach.call(vs.querySelectorAll(".sw"), function(b){ b.classList.toggle("on", b.getAttribute("data-t") === P.tema); });
   Array.prototype.forEach.call(vs.querySelectorAll(".seg"), function(b){ b.classList.toggle("on", (b.getAttribute("data-m") === "1") === !!P.gelap); });
   Array.prototype.forEach.call(vs.querySelectorAll("input[data-k]"), function(i){ i.checked = P[i.getAttribute("data-k")] !== false && !!P[i.getAttribute("data-k")]; });
@@ -1540,6 +1662,7 @@ vs.addEventListener("click", function(e){
   if(b.hasAttribute("data-t")) P.tema = b.getAttribute("data-t");
   else if(b.hasAttribute("data-m")) P.gelap = b.getAttribute("data-m") === "1";
   else if(b.id === "setTes"){ tesSuara(); return; }
+  else if(b.id === "setPasang"){ pasangApp(); return; }
   else if(b.id === "setReset") P = { tema:"biru", gelap:false, suara:true, bunyi:true, nada:"tek", ringkas:false };
   else return;
   simpan(); terapkan(); isiSet();
@@ -1573,6 +1696,33 @@ if(document.readyState === "complete") mulaiUI(); else window.addEventListener("
   salam.onerror = selesai;   // file tidak ada: berhenti mencoba
   EV.forEach(function(n){ document.addEventListener(n, mainkan, true); });
   mainkan();
+})();
+</script>
+<script>
+// pasang aplikasi (PWA): tombolnya ada di menu Pengaturan.
+// Android Chrome memasang langsung lewat pemicu browser; iPhone dan browser lain diberi petunjuk.
+window.PWA = (function(){
+  var tunda = null;
+  window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); tunda = e; });
+  window.addEventListener("appinstalled", function(){ tunda = null; });
+  function terpasang(){
+    try{ return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true; }catch(e){ return false; }
+  }
+  function ios(){
+    var u = navigator.userAgent || "";
+    return /iphone|ipad|ipod/i.test(u) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+  return {
+    terpasang: terpasang,
+    pasang: function(){
+      if(terpasang()) return Promise.resolve("sudah");
+      if(tunda){
+        var t = tunda; tunda = null; t.prompt();
+        return t.userChoice.then(function(c){ return c && c.outcome === "accepted" ? "ok" : "batal"; });
+      }
+      return Promise.resolve(ios() ? "ios" : "manual");
+    }
+  };
 })();
 </script>
 <script>
