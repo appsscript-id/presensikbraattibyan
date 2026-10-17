@@ -390,7 +390,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "3.5.8";
+var APP_VERSI = "3.6.0";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -2415,7 +2415,7 @@ $("kkSimpan").onclick = function(){
   var rec = KK.filter(function(x){ return x.nilai !== x.awal; }).map(function(x){ return { nama:x.nama, status:x.nilai }; });
   if(!rec.length){ say($("kkMsg"), "Belum ada perubahan.", "err"); return; }
   var hapus = rec.filter(function(x){ return !x.status; }).length;
-  if(hapus && !confirm(hapus + " catatan absen akan dihapus. Lanjutkan?")) return;
+  function lanjut(){
   unlockSuara(); say($("kkMsg"), "Menyimpan...", "info"); $("kkSimpan").disabled = true;
   api("simpanAbsenTanggal", { token:S.token, tanggal:t, records:rec }).then(function(r){
     $("kkSimpan").disabled = false;
@@ -2426,6 +2426,8 @@ $("kkSimpan").onclick = function(){
     bicara("Perubahan berhasil disimpan.");
     if(t === wibSekarang().tgl) muatSiswa();
   }).catch(function(e){ $("kkSimpan").disabled = false; say($("kkMsg"), galat(e), "err"); });
+  }
+  if(hapus) konfirmasi(hapus + " catatan absen akan dihapus. Lanjutkan?", "Hapus", lanjut); else lanjut();
 };
 if(btGuru){
   var kb = document.createElement("button"); kb.type = "button"; kb.className = "gray"; kb.textContent = "✏️ Ubah Absen Hari Lalu";
@@ -2677,8 +2679,16 @@ function konfirmasi(teks, labelOk, fn){
       r.list.forEach(function(x){
         var row = document.createElement("div"); row.className = "siswa";
         var nm = document.createElement("div"); nm.className = "nm"; nm.appendChild(document.createTextNode(x.nama));
-        var sm = document.createElement("small"); sm.textContent = "Kelas " + x.kelas + " · Hadir " + x.hitung.Hadir + ", Izin " + x.hitung.Izin + ", Sakit " + x.hitung.Sakit + ", Alpa " + x.hitung.Alpa; nm.appendChild(sm);
+        var sm = document.createElement("small"); sm.textContent = "Kelas " + x.kelas + " · Hadir " + x.hitung.Hadir + ", Izin " + x.hitung.Izin + ", Sakit " + x.hitung.Sakit + ", Alpa " + x.hitung.Alpa + " · ketuk untuk detail"; nm.appendChild(sm);
         var pil = document.createElement("span"); pil.className = "pil bl"; pil.textContent = x.persen + "%";
+        row.style.cursor = "pointer"; row.title = "Ketuk untuk melihat kalender kehadiran";
+        row.onclick = function(){
+          var ki = -1; K.kelas.forEach(function(k, i){ if(k.kelas === x.kelas) ki = i; });
+          if(ki < 0) return;
+          $("krKelas").value = ki; isiSiswaK(); $("krSiswa").value = x.nama;
+          if($("krSiswa").value !== x.nama) return;
+          muatKRekap(); $("krRingkas").scrollIntoView({ behavior:"smooth", block:"start" });
+        };
         row.appendChild(nm); row.appendChild(pil); box.appendChild(row);
       });
     }, logout);
