@@ -389,7 +389,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "3.7.0";
+var APP_VERSI = "3.7.1";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1492,6 +1492,7 @@ body.app #vKepsek #kList{flex:0 1 auto}
 .wHari b{display:block;font-size:16px;font-weight:800;line-height:1.25}
 .wHari small{display:block;font-size:12.5px;font-weight:600;opacity:.92;margin-top:1px}
 .wHari.lb{background:rgba(229,72,77,.12);color:var(--bad)}
+.pinIn{-webkit-text-security:disc;text-security:disc}
 #vWSet h4{margin:18px 0 8px;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
 #vWSet h4:first-of-type{margin-top:4px}
 #vWSet .row{display:flex;gap:10px;align-items:center}
@@ -2799,9 +2800,9 @@ function konfirmasi(teks, labelOk, fn){
     '<h4>Warna tema</h4><div class="row">' + Object.keys(TEMA).map(function(k){ return '<button type="button" class="sw" data-t="' + k + '" style="background:' + TEMA[k][0] + '"></button>'; }).join("") + '</div>' +
     '<h4>Mode tampilan</h4><div class="row"><button type="button" class="seg" data-m="0">☀️ Terang</button><button type="button" class="seg" data-m="1">🌙 Gelap</button></div>' +
     '<h4>Ganti PIN</h4>' +
-    '<input type="password" id="wpLama" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="PIN lama (6 angka)">' +
-    '<input type="password" id="wpBaru" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="PIN baru (6 angka)">' +
-    '<input type="password" id="wpUlang" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Ulangi PIN baru">' +
+    '<input type="text" id="wpLama" class="pinIn" inputmode="numeric" maxlength="6" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" placeholder="PIN lama (6 angka)">' +
+    '<input type="text" id="wpBaru" class="pinIn" inputmode="numeric" maxlength="6" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" placeholder="PIN baru (6 angka)">' +
+    '<input type="text" id="wpUlang" class="pinIn" inputmode="numeric" maxlength="6" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" placeholder="Ulangi PIN baru">' +
     '<button type="button" id="wpSimpan">🔑 Simpan PIN Baru</button><div id="wpMsg" class="msg"></div>' +
     '<div class="ver">Created By Furqon S<br>Versi ' + APP_VERSI + ' (' + APP_TGL + ')</div>';
   $("vWaliHasil").parentNode.insertBefore(v, $("vWaliHasil").nextSibling);
@@ -2828,6 +2829,7 @@ function konfirmasi(teks, labelOk, fn){
     if(!/^\d{6}$/.test(b)){ say(m, "PIN baru harus 6 angka.", "err"); return; }
     if(b !== c){ say(m, "Ulangi PIN baru tidak sama.", "err"); return; }
     if(a === b){ say(m, "PIN baru harus berbeda dari PIN lama.", "err"); return; }
+    if(/^(\d)\1{5}$/.test(b) || "01234567890123456789".indexOf(b) >= 0 || "98765432109876543210".indexOf(b) >= 0){ say(m, "PIN terlalu mudah ditebak (angka sama atau berurutan). Pilih PIN lain.", "err"); return; }
     var bt = $("wpSimpan"); bt.disabled = true; say(m, "Menyimpan...", "info");
     api("gantiPinWali", { token:W.token, pinLama:a, pinBaru:b }).then(function(r){
       bt.disabled = false;
