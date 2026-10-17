@@ -390,7 +390,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "3.5.2";
+var APP_VERSI = "3.5.3";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1386,7 +1386,9 @@ body.gelap #lbInfo{background:rgba(255,176,32,.14);color:#ffcf70}
   body.app #vRekap .rkMain .kHero{margin-top:0}
   body.app #vRekap #rkList:empty::before{content:"Pilih murid dan bulan di sebelah kiri, lalu klik Tampilkan.";display:block;margin-top:14px;color:var(--muted);font-weight:600;font-size:14px}
   #rkList .rkWrap{display:block;margin-top:16px}
-  #rkList .rkCal{max-width:460px}
+  #rkList .rkCal{max-width:none}
+  #rkList .rkCal .kal{gap:8px}
+  #rkList .rkCal .kal .kc{aspect-ratio:auto;height:46px;border-radius:14px;font-size:14px}
   #rkList .rkHist{margin-top:18px}
   #rkList .rkHist .siswa{break-inside:avoid}
   #rkList .rkHist{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));column-gap:12px}
