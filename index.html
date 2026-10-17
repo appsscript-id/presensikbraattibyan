@@ -2995,8 +2995,15 @@ function konfirmasi(teks, labelOk, fn){
       };
       no.onclick = function(){ konfirmasi("Tolak pengajuan " + x.jenis.toLowerCase() + " " + x.nama + "?", "Tolak", function(){ proses(x, false); }); };
       bar.appendChild(ok); bar.appendChild(no); it.appendChild(bar);
-    } else if(x.oleh){
-      it.appendChild(el("small", "", x.status + " oleh " + x.oleh + (x.pada ? " · " + x.pada : "")));
+    } else {
+      if(x.oleh) it.appendChild(el("small", "", x.status + " oleh " + x.oleh + (x.pada ? " · " + x.pada : "")));
+      if(x.status === "Disetujui"){
+        var cb = el("button", "gray", "↩ Batalkan persetujuan"); cb.type = "button";
+        cb.onclick = function(){
+          konfirmasi("Batalkan persetujuan " + x.jenis.toLowerCase() + " " + x.nama + " tanggal " + tglPanjang(x.tanggal) + "? Absen dikembalikan seperti sebelum disetujui.", "Batalkan", function(){ cabut(x); });
+        };
+        it.appendChild(cb);
+      }
     }
     return it;
   }
@@ -3021,6 +3028,16 @@ function konfirmasi(teks, labelOk, fn){
       if(sesiHabis(r)){ logout(r.message); return; }
       if(!r || r.status !== "success"){ muatGIzin((r && r.message) || "Gagal memproses.", "err"); return; }
       if(setuju && x.tanggal === wibSekarang().tgl) muatSiswa();   // dashboard ikut diperbarui
+      muatGIzin(r.message, "ok");
+    }).catch(function(e){ say($("igMsg"), galat(e), "err"); });
+  }
+
+  function cabut(x){
+    say($("igMsg"), "Membatalkan...", "info");
+    api("batalkanIzinGuru", { token:S.token, id:x.id }).then(function(r){
+      if(sesiHabis(r)){ logout(r.message); return; }
+      if(!r || r.status !== "success"){ muatGIzin((r && r.message) || "Gagal membatalkan.", "err"); return; }
+      if(x.tanggal === wibSekarang().tgl) muatSiswa();   // dashboard ikut diperbarui
       muatGIzin(r.message, "ok");
     }).catch(function(e){ say($("igMsg"), galat(e), "err"); });
   }
