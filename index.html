@@ -2593,12 +2593,24 @@ document.addEventListener("click", function(e){
     '<h4>Warna tema</h4><div class="row">' + Object.keys(TEMA).map(function(k){ return '<button type="button" class="sw" data-t="' + k + '" style="background:' + TEMA[k][0] + '"></button>'; }).join("") + '</div>' +
     '<h4>Mode tampilan</h4><div class="row"><button type="button" class="seg" data-m="0">☀️ Terang</button><button type="button" class="seg" data-m="1">🌙 Gelap</button></div>' +
     '<button type="button" class="gray" id="kSetReset">Kembalikan tema ke bawaan</button>' +
+    '<h4>Riwayat login</h4><button type="button" class="red" id="kSetHapusRiwayat">🗑️ Hapus Riwayat Login</button><div id="kSetRiwayatMsg" class="msg"></div>' +
     '<div class="ver">Created By Furqon S<br>Versi ' + APP_VERSI + ' (' + APP_TGL + ')</div>';
   $("vDash").parentNode.insertBefore(v, $("vDash"));
   VIEWS.push("vKSet");
   $("kSetAmbil").onclick = function(){ bukaPilihFoto("kepsek", "Ambil", $("kSetMsg")); };
   $("kSetPilih").onclick = function(){ bukaPilihFoto("kepsek", "Pilih", $("kSetMsg")); };
   $("kSetHapus").onclick = function(){ simpanFotoAkun("kepsek", "", $("kSetMsg")); };
+  $("kSetHapusRiwayat").onclick = function(){
+    var m = $("kSetRiwayatMsg");
+    if(!confirm("Hapus SELURUH riwayat login (guru, kepala sekolah, wali murid)? Tindakan ini tidak bisa dibatalkan.")) return;
+    var bt = $("kSetHapusRiwayat"); bt.disabled = true; say(m, "Menghapus...", "info");
+    api("hapusRiwayatLogin", { token:K.token }).then(function(r){
+      bt.disabled = false;
+      if(sesiHabis(r)){ logout(r.message); return; }
+      if(!r || r.status !== "success"){ say(m, (r && r.message) || "Gagal menghapus.", "err"); return; }
+      say(m, r.message, "ok");
+    }).catch(function(e){ bt.disabled = false; say(m, galat(e), "err"); });
+  };
   window.isiFotoK = function(){
     var im = $("kSetFoto"); if(!im) return;
     if(fotoValid(FOTOAKUN.kepsek)){ im.src = FOTOAKUN.kepsek; im.classList.remove("hidden"); } else { im.removeAttribute("src"); im.classList.add("hidden"); }
@@ -2606,7 +2618,7 @@ document.addEventListener("click", function(e){
   var _ifs = window.isiFotoSaya;
   window.isiFotoSaya = function(){ if(_ifs) _ifs(); isiFotoK(); };
   window.isiKSet = function(){
-    isiFotoK(); say($("kSetMsg"), "");
+    isiFotoK(); say($("kSetMsg"), ""); say($("kSetRiwayatMsg"), "");
     Array.prototype.forEach.call(v.querySelectorAll(".sw"), function(b){ b.classList.toggle("on", b.getAttribute("data-t") === P.tema); });
     Array.prototype.forEach.call(v.querySelectorAll(".seg"), function(b){ b.classList.toggle("on", (b.getAttribute("data-m") === "1") === !!P.gelap); });
   };
@@ -2632,6 +2644,30 @@ document.addEventListener("click", function(e){
   });
   rk.insertBefore(side, kembali); rk.insertBefore(main, kembali);
 })();
+// ---------- v13: murid dengan kehadiran rendah (kepala sekolah, di halaman Rekap Siswa) ----------
+(function(){
+  var ref = document.querySelector('#vKRekap button[onclick="muatKRekap()"]'); if(!ref) return;
+  var b = document.createElement("button"); b.type = "button"; b.className = "gray"; b.textContent = "⚠️ Kehadiran Rendah (di bawah 75%)";
+  ref.parentNode.insertBefore(b, ref.nextSibling);
+  b.onclick = function(){
+    var bl = $("krBulan").value;
+    if(!bl){ say($("krMsg"), "Pilih bulan.", "err"); return; }
+    $("krRingkas").className = "b"; $("krRingkas").textContent = ""; $("krList").innerHTML = "";
+    ambil("kepsekPerhatian", { token:K.token, bulan:bl, batas:75 }, $("krMsg"), function(r){
+      var box = $("krList"); box.innerHTML = "";
+      $("krRingkas").textContent = "⚠️ " + namaBulan(r.bulan) + " · " + r.list.length + " murid dengan kehadiran di bawah " + r.batas + "%";
+      if(!r.list.length){ box.textContent = "Tidak ada murid dengan kehadiran di bawah " + r.batas + "% pada bulan ini. 🎉"; return; }
+      r.list.forEach(function(x){
+        var row = document.createElement("div"); row.className = "siswa";
+        var nm = document.createElement("div"); nm.className = "nm"; nm.appendChild(document.createTextNode(x.nama));
+        var sm = document.createElement("small"); sm.textContent = "Kelas " + x.kelas + " · Hadir " + x.hitung.Hadir + ", Izin " + x.hitung.Izin + ", Sakit " + x.hitung.Sakit + ", Alpa " + x.hitung.Alpa; nm.appendChild(sm);
+        var pil = document.createElement("span"); pil.className = "pil bl"; pil.textContent = x.persen + "%";
+        row.appendChild(nm); row.appendChild(pil); box.appendChild(row);
+      });
+    }, logout);
+  };
+})();
+
 // sesi yang dipulihkan saat refresh
 if(!$("vDash").classList.contains("hidden")) show("vDash");
 if(!$("vKepsek").classList.contains("hidden")) show("vKepsek");
