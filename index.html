@@ -753,8 +753,14 @@ function openDash(){
 function muatSiswa(){
   $("listSiswa").textContent = "Memuat...";
   ambil("getSiswa", { token:S.token }, $("dashMsg"), function(r){
-    S.siswa = r.siswa.map(function(x){ return { nama:x.nama, status:x.status, ada:x.ada, foto:x.foto || "", desc:null, nilai:x.status || "" }; });
+    var fc = fotoCache(S.kelas);
+    S.siswa = r.siswa.map(function(x){ return { nama:x.nama, status:x.status, ada:x.ada, foto:fc[x.nama] || "", desc:null, nilai:x.status || "" }; });
     renderSiswa();
+    fotoSegarkan(S.kelas, function(map){            // foto menyusul di belakang, daftar sudah tampil duluan
+      var beda = false;
+      S.siswa.forEach(function(x){ var f = map[x.nama] || ""; if(f !== x.foto){ x.foto = f; beda = true; } });
+      if(beda) renderSiswa();
+    });
   }, logout);
 }
 function renderSiswa(){
@@ -895,7 +901,7 @@ function closeCam(){
 }
 function logBaris(t){ var d = document.createElement("div"); d.textContent = t; $("scanLog").insertBefore(d, $("scanLog").firstChild); }
  
-// potong area wajah menjadi foto kecil persegi (JPEG ±3-5 KB) untuk disimpan sebagai foto murid
+// potong area wajah menjadi foto kecil persegi (JPEG ±10-14 KB) untuk disimpan sebagai foto murid
 function potongWajah(src, box){
   try{
     var sw = src.videoWidth || src.naturalWidth || src.width, sh = src.videoHeight || src.naturalHeight || src.height;
@@ -903,10 +909,36 @@ function potongWajah(src, box){
     var cx = box.x + box.width / 2, cy = box.y + box.height / 2;
     sisi = Math.min(sisi, sw, sh);
     var sx = Math.min(Math.max(cx - sisi / 2, 0), sw - sisi), sy = Math.min(Math.max(cy - sisi / 2, 0), sh - sisi);
-    var c = document.createElement("canvas"); c.width = 96; c.height = 96;
-    c.getContext("2d").drawImage(src, sx, sy, sisi, sisi, 0, 0, 96, 96);
-    return c.toDataURL("image/jpeg", 0.7);
+    var c = document.createElement("canvas"); c.width = 192; c.height = 192;
+    var g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(src, sx, sy, sisi, sisi, 0, 0, 192, 192);
+    return c.toDataURL("image/jpeg", 0.82);
   }catch(e){ return ""; }
+}
+// ---- foto murid: dipisah dari daftar nama, disimpan di HP (cache) supaya cepat ----
+var FOTOM = {}, FOTOOK = {}, FOTOWAIT = {};
+function fkey(k){ return String(k || "").trim().toLowerCase(); }
+function fotoValid(f){ return !!f && String(f).indexOf("data:image/jpeg;base64,") === 0; }
+function fotoCache(kelas){
+  var k = fkey(kelas); if(FOTOM[k]) return FOTOM[k];
+  try{ var o = JSON.parse(localStorage.getItem("fotoc") || "{}"); FOTOM[k] = o[k] || {}; }catch(e){ FOTOM[k] = {}; }
+  return FOTOM[k];
+}
+function fotoSimpan(kelas, map){
+  var k = fkey(kelas); FOTOM[k] = map;
+  try{ var o = JSON.parse(localStorage.getItem("fotoc") || "{}"); o[k] = map; localStorage.setItem("fotoc", JSON.stringify(o)); }catch(e){}
+}
+// ambil foto terbaru dari server (sekali per kelas per kunjungan); cb(map) dipanggil setelah selesai
+function fotoSegarkan(kelas, cb){
+  var k = fkey(kelas);
+  if(FOTOOK[k]){ cb(fotoCache(kelas)); return; }
+  if(FOTOWAIT[k]){ FOTOWAIT[k].push(cb); return; }
+  FOTOWAIT[k] = [cb];
+  api("fotoKelas", { kelas:kelas }).then(function(r){
+    var q = FOTOWAIT[k] || []; delete FOTOWAIT[k];
+    if(!r || r.status !== "success") return;
+    FOTOOK[k] = true; fotoSimpan(kelas, r.foto || {});
+    q.forEach(function(f){ try{ f(r.foto || {}); }catch(e){} });
+  }).catch(function(){ delete FOTOWAIT[k]; });
 }
 function snap(){
   if(!stream) return;
@@ -927,6 +959,7 @@ function tambahSampel(desc, foto){
     if(sesiHabis(r)){ logout(r.message); return; }
     if(r.status !== "success"){ say($("camMsg"), r.message, "err"); return; }
     S.siswa.forEach(function(x){ if(x.nama === S.target){ x.ada = true; if(fotoBaru) x.foto = fotoBaru; } });
+    if(fotoBaru){ var fm = fotoCache(S.kelas); fm[S.target] = fotoBaru; fotoSimpan(S.kelas, fm); }
     say($("camMsg"), r.message, "ok"); stopCam();
   }).catch(function(e){ S.samples = []; S.foto = ""; say($("camMsg"), galat(e), "err"); });
 }
@@ -1243,6 +1276,9 @@ details.kc summary::-webkit-details-marker{display:none}
 #listSiswa .siswa:nth-child(4n)::before{content:"🦊"}
 #listSiswa .siswa.berfoto::before{display:none}
 #listSiswa .siswa .fotoM{flex:0 0 38px;width:38px;height:38px;border-radius:50%;object-fit:cover;background:var(--brand-soft);border:2px solid var(--brand-soft)}
+#fotoPreview{position:fixed;inset:0;z-index:9999;background:rgba(10,18,32,.72);display:flex;align-items:center;justify-content:center;cursor:zoom-out;animation:kUp .2s both}
+#fotoPreview img{width:min(78vw,320px);height:min(78vw,320px);object-fit:cover;border-radius:50%;border:4px solid #fff;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.fotoR{cursor:zoom-in}
 .kNm{display:flex;align-items:center;gap:10px;min-width:0}
 .fotoR{width:46px;height:46px;flex:0 0 46px;border-radius:50%;object-fit:cover;border:2px solid var(--card);background:var(--brand-soft)}
 #pilihMurid{margin-top:8px}
@@ -1372,6 +1408,11 @@ document.addEventListener("keydown", function(e){
   if(!PINAKTIF || !PINAKTIF.box.offsetParent) return;
   if(/^\d$/.test(e.key)) PINAKTIF.tekan(e.key); else if(e.key === "Backspace") PINAKTIF.tekan("⌫");
 });
+function setAv(av, nama, foto){
+  av.innerHTML = ""; av.classList.remove("avf");
+  if(fotoValid(foto)){ av.classList.add("avf"); var im = document.createElement("img"); im.alt = ""; im.src = foto; av.appendChild(im); }
+  else av.textContent = String(nama).charAt(0).toUpperCase();
+}
 function daftarNama(box, items, fn, judul, back){
   PINAKTIF = null; box.innerHTML = ""; BACK[box.id] = back || null;
   if(judul){ var p = document.createElement("p"); p.className = "lead2"; p.textContent = judul; box.appendChild(p); }
@@ -1379,10 +1420,7 @@ function daftarNama(box, items, fn, judul, back){
   items.forEach(function(it){
     var b = document.createElement("button"); b.type = "button"; b.className = "nb2";
     b.innerHTML = '<span class="av"></span><span><b></b><small></small></span>';
-    var av = b.querySelector(".av");
-    if(it.f && String(it.f).indexOf("data:image/jpeg;base64,") === 0){
-      av.classList.add("avf"); var im = document.createElement("img"); im.alt = ""; im.src = it.f; av.appendChild(im);
-    } else av.textContent = String(it.t).charAt(0).toUpperCase();
+    setAv(b.querySelector(".av"), it.t, it.f);
     b.querySelector("b").textContent = it.t; b.querySelector("small").textContent = it.s || "";
     b.onclick = function(){ fn(it); }; w.appendChild(b);
   });
@@ -1433,8 +1471,15 @@ function muatKelas(){
   });
 }
 function wSiswa(k){
-  daftarNama($("wBox"), k.siswa.map(function(n){ return { t:n, s:"Kelas " + k.kelas, f:(k.foto || {})[n] || "" }; }),
+  var fc = fotoCache(k.kelas);
+  daftarNama($("wBox"), k.siswa.map(function(n){ return { t:n, s:"Kelas " + k.kelas, f:fc[n] || "" }; }),
     function(it){ wPin(k, it.t); }, "Kelas " + k.kelas + " · pilih nama anak", muatKelas);
+  fotoSegarkan(k.kelas, function(map){            // foto menyusul; nama sudah tampil duluan
+    Array.prototype.forEach.call($("wBox").querySelectorAll(".nb2"), function(b){
+      var n = b.querySelector("b").textContent, av = b.querySelector(".av");
+      if(map[n] && av && !(av.querySelector("img") && av.querySelector("img").src === map[n])) setAv(av, n, map[n]);
+    });
+  });
 }
 function wPin(k, nama){
   var msg = $("wMsg");
@@ -2230,12 +2275,29 @@ tampilRekap = function(r, eR, eL){
   _trAsli(r, eR, eL);
   var h = r.hitung, pr = persen(h), E = ["😊", "📝", "🤒", "😢"], K4 = ["Hadir", "Izin", "Sakit", "Alpa"];
   eR.className = "kHero";
-  var fotoR = (r.foto && String(r.foto).indexOf("data:image/jpeg;base64,") === 0) ? '<img class="fotoR" alt="" src="' + r.foto + '">' : "";
+  var fr = r.foto || (fotoCache(r.kelas)[r.nama]) || "";
+  var fotoR = fotoValid(fr) ? '<img class="fotoR" alt="" src="' + fr + '">' : "";
   eR.innerHTML = '<div class="kTop">' + ringK(pr < 0 ? 0 : pr) + '<div class="kNm">' + fotoR + '<div><b>' + esc(r.nama) + '</b><span>' + namaBulan(r.bulan) +
     (pr < 0 ? " · belum ada data" : " · " + pr + "% hadir") + '</span></div></div></div><div class="kSt kSt4">' +
     K4.map(function(s, i){ return '<div class="s' + i + '"><i>' + E[i] + '</i><b>' + h[s] + '</b><small>' + s + '</small></div>'; }).join("") + '</div>';
+  if(!fotoR && r.kelas) fotoSegarkan(r.kelas, function(map){   // foto belum ada di HP: ambil, lalu pasang
+    var kn = eR.querySelector(".kNm"), bb = kn && kn.querySelector("b");
+    if(!kn || !bb || bb.textContent !== r.nama || kn.querySelector(".fotoR") || !fotoValid(map[r.nama])) return;
+    var im = document.createElement("img"); im.className = "fotoR"; im.alt = ""; im.src = map[r.nama]; kn.insertBefore(im, kn.firstChild);
+  });
 };
 (function(){ var g = document.querySelector("#vDash .head h2"); if(g) g.textContent = "🍎 Dashboard Guru"; })();
+
+// foto murid di kartu rekap: ketuk untuk memperbesar, ketuk lagi untuk menutup
+document.addEventListener("click", function(e){
+  var ada = document.getElementById("fotoPreview");
+  if(ada){ ada.remove(); return; }
+  var im = e.target.closest ? e.target.closest(".fotoR") : null;
+  if(!im) return;
+  var ov = document.createElement("div"); ov.id = "fotoPreview";
+  var big = document.createElement("img"); big.alt = ""; big.src = im.src;
+  ov.appendChild(big); document.body.appendChild(ov);
+});
 
 // sesi yang dipulihkan saat refresh
 if(!$("vDash").classList.contains("hidden")) show("vDash");
