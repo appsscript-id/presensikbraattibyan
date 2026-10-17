@@ -729,7 +729,7 @@ function loginWali(){
     $("btnWali").disabled = false;
     if(!r || r.status !== "success"){ say($("wMsg"), (r && r.message) || "Gagal masuk.", "err"); return; }
     W.token = r.token; W.nama = r.nama; W.kelas = r.kelas; $("wKode").value = "";
-    $("wJudul").textContent = "Absensi " + r.nama; $("wInfo").textContent = "Kelas " + r.kelas;
+    $("wJudul").textContent = "Absensi " + r.nama; $("wJudul").classList.remove("adaFoto"); $("wInfo").textContent = "Kelas " + r.kelas;
     $("wBulan").value = bln(); $("wrRingkas").textContent = ""; $("wrList").innerHTML = ""; say($("wrMsg"), "");
     show("vWaliHasil"); muatRekapWali();
   }).catch(function(e){ $("btnWali").disabled = false; say($("wMsg"), galat(e), "err"); });
@@ -1240,6 +1240,10 @@ details.kc summary::-webkit-details-marker{display:none}
 #listSiswa .siswa:nth-child(4n)::before{content:"🦊"}
 #listSiswa .siswa.berfoto::before{display:none}
 #listSiswa .siswa .fotoM{flex:0 0 38px;width:38px;height:38px;border-radius:50%;object-fit:cover;background:var(--brand-soft);border:2px solid var(--brand-soft)}
+.kNm{display:flex;align-items:center;gap:10px;min-width:0}
+.fotoR{width:46px;height:46px;flex:0 0 46px;border-radius:50%;object-fit:cover;border:2px solid var(--card);background:var(--brand-soft)}
+#vWaliHasil h3.adaFoto::before{display:none}
+#vWaliHasil h3 .fotoJ{width:34px;height:34px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;border:2px solid rgba(255,255,255,.7)}
 #pilihMurid{margin-top:8px}
 #pilihMurid button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin:0 0 6px;background:var(--field);color:var(--ink);box-shadow:none}
 #pilihMurid button .fotoM{width:34px;height:34px;border-radius:50%;object-fit:cover;flex:0 0 34px}
@@ -1436,7 +1440,7 @@ function wPin(k, nama){
       api("loginWali", { nama:nama, kode:p, kelas:k.kelas }).then(function(r){
         if(!r || r.status !== "success"){ say(msg, (r && r.message) || "Gagal masuk.", "err"); reset(); return; }
         W.token = r.token; W.nama = r.nama; W.kelas = r.kelas;
-        $("wJudul").textContent = "Absensi " + r.nama; $("wInfo").textContent = "Kelas " + r.kelas;
+        $("wJudul").textContent = "Absensi " + r.nama; $("wJudul").classList.remove("adaFoto"); $("wInfo").textContent = "Kelas " + r.kelas;
         $("wBulan").value = bln(); $("wrRingkas").textContent = ""; $("wrList").innerHTML = ""; say($("wrMsg"), "");
         say(msg, ""); bunyiMasuk(); show("vWaliHasil"); muatRekapWali();
       }).catch(function(e){ say(msg, galat(e), "err"); reset(); });
@@ -2222,9 +2226,18 @@ tampilRekap = function(r, eR, eL){
   _trAsli(r, eR, eL);
   var h = r.hitung, pr = persen(h), E = ["😊", "📝", "🤒", "😢"], K4 = ["Hadir", "Izin", "Sakit", "Alpa"];
   eR.className = "kHero";
-  eR.innerHTML = '<div class="kTop">' + ringK(pr < 0 ? 0 : pr) + '<div><b>' + esc(r.nama) + '</b><span>' + namaBulan(r.bulan) +
-    (pr < 0 ? " · belum ada data" : " · " + pr + "% hadir") + '</span></div></div><div class="kSt kSt4">' +
+  var fotoR = (r.foto && String(r.foto).indexOf("data:image/jpeg;base64,") === 0) ? '<img class="fotoR" alt="" src="' + r.foto + '">' : "";
+  eR.innerHTML = '<div class="kTop">' + ringK(pr < 0 ? 0 : pr) + '<div class="kNm">' + fotoR + '<div><b>' + esc(r.nama) + '</b><span>' + namaBulan(r.bulan) +
+    (pr < 0 ? " · belum ada data" : " · " + pr + "% hadir") + '</span></div></div></div><div class="kSt kSt4">' +
     K4.map(function(s, i){ return '<div class="s' + i + '"><i>' + E[i] + '</i><b>' + h[s] + '</b><small>' + s + '</small></div>'; }).join("") + '</div>';
+  if(eR.id === "wrRingkas"){
+    var j = $("wJudul"), lama = j.querySelector(".fotoJ"); if(lama) lama.remove();
+    j.classList.remove("adaFoto");
+    if(fotoR){
+      var im = document.createElement("img"); im.className = "fotoJ"; im.alt = ""; im.src = r.foto;
+      j.insertBefore(im, j.firstChild); j.classList.add("adaFoto");
+    }
+  }
 };
 (function(){ var g = document.querySelector("#vDash .head h2"); if(g) g.textContent = "🍎 Dashboard Guru"; })();
 
