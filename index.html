@@ -357,7 +357,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 <div id="vDash" class="hidden">
   <div class="head">
     <h2>Dashboard Guru</h2>
-    <div>Selamat datang, <b id="dNama"></b></div>
+    <div><span id="dSapa">Selamat datang</span>, <b id="dNama"></b></div>
     <div>Kelas: <b id="dKelas"></b> &nbsp;|&nbsp; <span id="dTgl"></span></div>
   </div>
   <div class="card">
@@ -1290,6 +1290,10 @@ details.kc summary::-webkit-details-marker{display:none}
 .card{border-radius:28px}
 .head::before{content:"🌤️";position:absolute;right:16px;bottom:4px;font-size:34px;z-index:1}
 .head.kepsek::before{content:"☁️"}
+#vDash .head[data-wkt="pagi"]::before{content:"🌅"}
+#vDash .head[data-wkt="siang"]::before{content:"☀️"}
+#vDash .head[data-wkt="sore"]::before{content:"🌇"}
+#vDash .head[data-wkt="malam"]::before{content:"🌙"}
 .kHero:empty{display:none}
 .kSt.kSt4{grid-template-columns:repeat(4,1fr)}
 /* beranda */
@@ -1695,6 +1699,14 @@ show = function(id){
 // ---------- DASHBOARD: jam digital ----------
 var jm = document.createElement("span"); jm.id = "jam";
 $("dTgl").parentNode.appendChild(document.createTextNode(" | ")); $("dTgl").parentNode.appendChild(jm);
+// salam & gambar di dashboard guru mengikuti jam (WIB): pagi 04-09, siang 10-14, sore 15-17, malam 18-03
+function salamWaktu(){
+  var j = Math.floor(wibSekarang().menit / 60), w = j >= 4 && j < 10 ? "pagi" : j >= 10 && j < 15 ? "siang" : j >= 15 && j < 18 ? "sore" : "malam";
+  var sp = $("dSapa"), hd = document.querySelector("#vDash .head");
+  if(sp) sp.textContent = "Selamat " + w.charAt(0).toUpperCase() + w.slice(1);
+  if(hd) hd.setAttribute("data-wkt", w);
+}
+salamWaktu(); setInterval(salamWaktu, 30000);
 setInterval(function(){
   if(jm.offsetParent) jm.textContent = new Date().toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit", second:"2-digit" }).replace(/\./g, ":");
 }, 1000);
