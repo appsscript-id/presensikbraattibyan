@@ -308,7 +308,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
     <h3>Ringkasan Absensi</h3>
     <input type="date" id="kTanggal">
     <div class="bar"><button class="purple" onclick="muatRingkasan()">Tampilkan</button>
-    <button class="gray" onclick="bukaKRekap()">📊 Rekap Siswa</button></div>
+</div>
     <div id="kMsg" class="msg"></div>
     <div id="kTotal" class="b"></div>
     <div id="kList"></div>
@@ -2580,6 +2580,22 @@ document.addEventListener("click", function(e){
   $("rlKembali").onclick = function(){ show("vKepsek"); };
 })();
 
+// kotak konfirmasi di dalam aplikasi (tanpa nama situs seperti confirm bawaan browser)
+function konfirmasi(teks, labelOk, fn){
+  var ov = document.createElement("div");
+  ov.style.cssText = "position:fixed;inset:0;z-index:10000;background:rgba(10,18,32,.55);display:flex;align-items:center;justify-content:center;padding:24px";
+  var bx = document.createElement("div");
+  bx.style.cssText = "background:var(--card);color:var(--ink);border-radius:24px;padding:22px 20px 16px;max-width:360px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35)";
+  var p = document.createElement("div"); p.style.cssText = "font-size:15px;font-weight:600;line-height:1.5;margin-bottom:14px"; p.textContent = teks;
+  var bar = document.createElement("div"); bar.className = "bar";
+  var b1 = document.createElement("button"); b1.type = "button"; b1.className = "gray"; b1.textContent = "Batal";
+  var b2 = document.createElement("button"); b2.type = "button"; b2.className = "red"; b2.textContent = labelOk || "Ya";
+  function tutup(){ ov.remove(); }
+  b1.onclick = tutup; b2.onclick = function(){ tutup(); fn(); };
+  ov.onclick = function(e){ if(e.target === ov) tutup(); };
+  bar.appendChild(b1); bar.appendChild(b2); bx.appendChild(p); bx.appendChild(bar); ov.appendChild(bx); document.body.appendChild(ov);
+}
+
 // ---------- v10: pengaturan kepala sekolah (foto + tema); tombol foto/keluar pindah ke sidebar ----------
 (function(){
   var fb = $("kFotoBox"); if(fb) fb.remove();
@@ -2602,14 +2618,15 @@ document.addEventListener("click", function(e){
   $("kSetHapus").onclick = function(){ simpanFotoAkun("kepsek", "", $("kSetMsg")); };
   $("kSetHapusRiwayat").onclick = function(){
     var m = $("kSetRiwayatMsg");
-    if(!confirm("Hapus SELURUH riwayat login (guru, kepala sekolah, wali murid)? Tindakan ini tidak bisa dibatalkan.")) return;
-    var bt = $("kSetHapusRiwayat"); bt.disabled = true; say(m, "Menghapus...", "info");
-    api("hapusRiwayatLogin", { token:K.token }).then(function(r){
-      bt.disabled = false;
-      if(sesiHabis(r)){ logout(r.message); return; }
-      if(!r || r.status !== "success"){ say(m, (r && r.message) || "Gagal menghapus.", "err"); return; }
-      say(m, r.message, "ok");
-    }).catch(function(e){ bt.disabled = false; say(m, galat(e), "err"); });
+    konfirmasi("Hapus SELURUH riwayat login (guru, kepala sekolah, wali murid)? Tindakan ini tidak bisa dibatalkan.", "Hapus", function(){
+      var bt = $("kSetHapusRiwayat"); bt.disabled = true; say(m, "Menghapus...", "info");
+      api("hapusRiwayatLogin", { token:K.token }).then(function(r){
+        bt.disabled = false;
+        if(sesiHabis(r)){ logout(r.message); return; }
+        if(!r || r.status !== "success"){ say(m, (r && r.message) || "Gagal menghapus.", "err"); return; }
+        say(m, r.message, "ok");
+      }).catch(function(e){ bt.disabled = false; say(m, galat(e), "err"); });
+    });
   };
   window.isiFotoK = function(){
     var im = $("kSetFoto"); if(!im) return;
