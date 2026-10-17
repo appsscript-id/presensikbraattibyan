@@ -390,7 +390,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbwn40Ejlpcyeu1ch2kZJ-5pKcsImJut16lTqcRaopUgnPyIsZBhoAljs6WsWdvS7oL6qA/exec";
 // =====================================================================
  
-var APP_VERSI = "2.5.0";
+var APP_VERSI = "1.6.0";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1235,6 +1235,29 @@ body.gelap #lbInfo{background:rgba(255,176,32,.14);color:#ffcf70}
 #vLibur .siswa{background:var(--field);border-radius:16px;padding:10px 12px;margin-bottom:6px;border-bottom:0}
 #vLibur .siswa.kini{background:var(--accent-soft)}
 #nav .nb span{transition:transform .15s}#nav .nb.on span{transform:scale(1.2)}
+/* v9: maskot burung hantu + sapaan */
+@keyframes kedip{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes lmb{0%,100%{transform:rotate(0)}25%{transform:rotate(-40deg)}50%{transform:rotate(10deg)}75%{transform:rotate(-40deg)}}
+@keyframes lpt{0%,100%{transform:translateY(0)}30%{transform:translateY(-16px) scale(1.08)}60%{transform:translateY(0) scale(.96,1.04)}}
+.mk{display:inline-block;width:56px;height:56px;flex:none;animation:fl 3s ease-in-out infinite}
+.mk svg{display:block;width:100%;height:100%}
+.mk .sy{transform-box:fill-box;transform-origin:50% 10%}
+.mk .mt{transform-box:fill-box;transform-origin:center;animation:kedip 4s infinite}
+.mk.lambai .sy{animation:lmb .9s}
+.mk.lompat{animation:lpt .7s}
+.head .mk{position:absolute;right:14px;top:50%;margin-top:-28px;z-index:2}
+#vDash .head::before,#vKepsek .head::before{display:none}
+#vDash .head,#vKepsek .head{padding-right:84px}
+#vWaliHasil,#vKoreksi{position:relative}
+#vWaliHasil h3{padding-right:76px}
+#vWaliHasil>.mk{position:absolute;right:28px;top:22px;width:44px;height:44px}
+#vKoreksi h3{padding-right:52px}
+#vKoreksi>.mk{position:absolute;right:18px;top:12px;width:40px;height:40px}
+.mkBer{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 8px}
+.mkBer .mk{width:64px;height:64px}
+.gel{background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:13px;line-height:1.35;padding:8px 12px;border-radius:16px 16px 16px 4px;max-width:210px}
+.kosong{text-align:center;padding:14px;color:var(--muted);font-weight:600;font-size:13.5px}
+.kosong .mk{display:block;width:72px;height:72px;margin:0 auto 6px}
 .ver{text-align:center;font-size:12px;line-height:1.6;color:var(--muted);font-weight:600;margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}
 #vKoreksi:not(.hidden){max-height:calc(100vh - 104px);max-height:calc(100dvh - 104px);overflow-y:auto}
 #vKoreksi .siswa select{min-width:110px}
@@ -2128,7 +2151,7 @@ if(btGuru){
 
 // ---------- versi aplikasi (paling bawah menu Pengaturan) ----------
 vs.insertAdjacentHTML("beforeend",
-  '<div class="ver">Created By Furqon S<br>Versi ' + APP_VERSI + ' (' + APP_TGL + ')</div>');
+  '<div class="ver">Presensi Online KB RA At Tibyan<br>Versi ' + APP_VERSI + ' (' + APP_TGL + ')</div>');
 
 // ---------- v7: tampilan dashboard kepala sekolah ----------
 (function(){
@@ -2181,6 +2204,60 @@ tampilRekap = function(r, eR, eL){
     K4.map(function(s, i){ return '<div class="s' + i + '"><i>' + E[i] + '</i><b>' + h[s] + '</b><small>' + s + '</small></div>'; }).join("") + '</div>';
 };
 (function(){ var g = document.querySelector("#vDash .head h2"); if(g) g.textContent = "🍎 Dashboard Guru"; })();
+
+// ---------- v9: maskot + sapaan sesuai waktu ----------
+var MK_SVG = '<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="38" rx="21" ry="22" fill="#ffb020"/><ellipse cx="32" cy="43" rx="13" ry="14" fill="#fff3d6"/>' +
+  '<ellipse cx="10" cy="42" rx="5" ry="11" fill="#e89a10"/><ellipse class="sy" cx="54" cy="42" rx="5" ry="11" fill="#e89a10"/>' +
+  '<g class="mt"><circle cx="23" cy="30" r="8" fill="#fff"/><circle cx="41" cy="30" r="8" fill="#fff"/><circle cx="24" cy="31" r="3.6" fill="#2b2118"/><circle cx="40" cy="31" r="3.6" fill="#2b2118"/>' +
+  '<circle cx="25.2" cy="29.8" r="1.2" fill="#fff"/><circle cx="41.2" cy="29.8" r="1.2" fill="#fff"/></g>' +
+  '<circle cx="17" cy="38" r="3" fill="#ff9db8" opacity=".6"/><circle cx="47" cy="38" r="3" fill="#ff9db8" opacity=".6"/><path d="M29 36h6l-3 5z" fill="#f08a24"/>' +
+  '<path d="M18 15l14-7 14 7-14 7z" fill="#3d4f66"/><path d="M25 19v5c0 3 14 3 14 0v-5" fill="#3d4f66"/><path d="M46 15v8" stroke="#f6b81c" stroke-width="2" stroke-linecap="round"/>' +
+  '<path d="M26 59h4M34 59h4" stroke="#f08a24" stroke-width="3" stroke-linecap="round"/></svg>';
+function mkEl(){ var s = document.createElement("span"); s.className = "mk"; s.innerHTML = MK_SVG; return s; }
+function mkReaksi(c){
+  Array.prototype.forEach.call(document.querySelectorAll(".mk"), function(m){
+    m.classList.remove("lambai", "lompat"); void m.offsetWidth; m.classList.add(c);
+    setTimeout(function(){ m.classList.remove(c); }, 1000);
+  });
+}
+["#vDash .head", "#vKepsek .head", "#vWaliHasil", "#vKoreksi"].forEach(function(s){ var e = document.querySelector(s); if(e) e.appendChild(mkEl()); });
+(function(){
+  var lead = document.querySelector("#vPilih .lead"); if(!lead) return;
+  var w = document.createElement("div"); w.className = "mkBer";
+  w.appendChild(mkEl()); var g = document.createElement("div"); g.className = "gel"; g.id = "gelBer"; w.appendChild(g);
+  lead.parentNode.insertBefore(w, lead);
+})();
+var _tr3 = tampilRekap;
+tampilRekap = function(r, eR, eL){
+  _tr3(r, eR, eL);
+  if(!r.list.length){ eL.innerHTML = '<div class="kosong"><span class="mk">' + MK_SVG + '</span>Belum ada catatan absen di bulan ini.</div>'; }
+};
+var _bc = bicara; bicara = function(t){ _bc(t); mkReaksi("lompat"); };
+if(P.waktu === undefined) P.waktu = true;
+var _sk = Array.prototype.filter.call(vs.querySelectorAll("h4"), function(x){ return x.textContent === "Suara"; })[0];
+if(_sk) _sk.insertAdjacentHTML("beforebegin", '<h4>Sapaan</h4><label class="tg">Warna header sesuai waktu<input type="checkbox" data-k="waktu"></label>');
+var _is = isiSet; isiSet = function(){ _is(); var c = vs.querySelector('input[data-k="waktu"]'); if(c) c.checked = P.waktu !== false; };
+function sapa(){
+  var j = Math.floor(wibSekarang().menit / 60);
+  return j >= 5 && j < 11 ? { t:"Selamat pagi", e:"☀️", c:["#f08a24", "#ffb347"] }
+       : j >= 11 && j < 15 ? { t:"Selamat siang", e:"🌤️", c:["#2f7df6", "#5b9dff"] }
+       : j >= 15 && j < 18 ? { t:"Selamat sore", e:"🌇", c:["#e5508a", "#ff9a62"] }
+       : { t:"Selamat malam", e:"🌙", c:["#3b2f8f", "#6a4cf0"] };
+}
+function terapkanSapa(){
+  var s = sapa(), pakai = P.waktu !== false;
+  ["#vDash .head", "#vKepsek .head"].forEach(function(q){
+    var hd = document.querySelector(q); if(!hd) return;
+    hd.style.background = pakai ? "linear-gradient(135deg," + s.c[0] + "," + s.c[1] + ")" : "";
+    var d = hd.querySelector("div"), n = d && d.firstChild;
+    if(n && n.nodeType === 3) n.nodeValue = s.t + " " + s.e + ", ";
+  });
+  var g = $("gelBer"); if(g) g.textContent = s.t + " " + s.e + "! Mau masuk sebagai siapa?";
+}
+vs.addEventListener("change", function(e){ if(e.target.getAttribute("data-k") === "waktu") terapkanSapa(); });
+vs.addEventListener("click", function(e){ if(e.target.id === "setReset") setTimeout(terapkanSapa, 0); });
+var _s9 = show; show = function(id){ _s9(id); terapkanSapa(); if(id === "vDash" || id === "vKepsek" || id === "vWaliHasil" || id === "vPilih") mkReaksi("lambai"); };
+terapkanSapa(); setInterval(terapkanSapa, 300000);
 
 // sesi yang dipulihkan saat refresh
 if(!$("vDash").classList.contains("hidden")) show("vDash");
