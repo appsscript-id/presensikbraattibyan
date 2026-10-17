@@ -299,7 +299,6 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
   <div id="wrMsg" class="msg"></div>
   <div id="wrRingkas" class="b"></div>
   <div id="wrList" style="margin-top:8px"></div>
-  <button class="red" onclick="keluarWali()">Keluar</button>
 </div>
  
 <div id="vKepsek" class="hidden">
@@ -390,7 +389,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "3.6.1";
+var APP_VERSI = "3.7.0";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1493,6 +1492,19 @@ body.app #vKepsek #kList{flex:0 1 auto}
 .wHari b{display:block;font-size:16px;font-weight:800;line-height:1.25}
 .wHari small{display:block;font-size:12.5px;font-weight:600;opacity:.92;margin-top:1px}
 .wHari.lb{background:rgba(229,72,77,.12);color:var(--bad)}
+#vWSet h4{margin:18px 0 8px;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+#vWSet h4:first-of-type{margin-top:4px}
+#vWSet .row{display:flex;gap:10px;align-items:center}
+#vWSet .sw{width:38px;height:38px;border-radius:50%;padding:0;margin:0;box-shadow:none;border:3px solid transparent}
+#vWSet .sw.on{border-color:var(--ink)}
+#vWSet .seg{flex:1;margin:0;background:var(--field);color:var(--ink2);box-shadow:none}
+#vWSet .seg.on{background:var(--brand);color:#fff}
+#vWSet:not(.hidden){max-height:calc(100vh - 104px);max-height:calc(100dvh - 104px);overflow-y:auto}
+@media (max-width:899px){#vWSet:not(.hidden){max-height:none;overflow:visible}}
+@media (min-width:900px){
+  body.app #vWSet,body.app #vWLibur,body.app #vWaliHasil{max-width:620px;width:100%;margin-left:auto;margin-right:auto}
+  body.app #vWaliHasil:not(.hidden),body.app #vWLibur:not(.hidden),#vWSet:not(.hidden){max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px)}
+}
 #vWLibur:not(.hidden){max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto}
 #vWLibur h4{margin:14px 0 6px;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
 #vWLibur .siswa{background:var(--field);border-radius:16px;padding:10px 12px;margin-bottom:6px;border-bottom:0}
@@ -1834,18 +1846,22 @@ nav.addEventListener("click", function(e){ var b = e.target.closest("[data-go]")
 function ukurNav(){ var h = nav.offsetHeight; if(h) document.documentElement.style.setProperty("--navh", h + "px"); }
 window.addEventListener("resize", ukurNav);
 var KPETA = { vKepsek:"kb", vKRekap:"kr", vRiwayat:"kl", vKSet:"ks" };
+var WPETA = { vWaliHasil:"wa", vWLibur:"wl", vWSet:"ws" };
+var NAVWALI = '<div class="nh"><img src="logo.png" alt="" onerror="this.style.display=\'none\'"><div><b>KB RA At Tibyan</b><small id="nvNama"></small></div></div>' +
+  [["wa","🏠","Absensi"],["wl","📅","Libur"],["ws","⚙️","Pengaturan"],["out","🚪","Keluar"]].map(function(i){
+    return '<button type="button" class="nb' + (i[0] === "out" ? " out" : "") + '" data-go="' + i[0] + '"><span>' + i[1] + '</span>' + i[2] + '</button>'; }).join("");
 var _show = show;
 show = function(id){
   _show(id);
-  var rl = PETA[id] ? "guru" : KPETA[id] ? "kepsek" : "", ap = !!rl;
-  if(ap && rl !== NAVROLE){ NAVROLE = rl; nav.innerHTML = rl === "kepsek" ? NAVKEPSEK : NAVGURU; }
+  var rl = PETA[id] ? "guru" : KPETA[id] ? "kepsek" : WPETA[id] ? "wali" : "", ap = !!rl;
+  if(ap && rl !== NAVROLE){ NAVROLE = rl; nav.innerHTML = rl === "kepsek" ? NAVKEPSEK : rl === "wali" ? NAVWALI : NAVGURU; }
   document.body.classList.toggle("app", ap);
   if(id === "vLogin") muatGuru(); else if(id === "vKLogin") muatKepsek(); else if(id === "vWali") muatKelas();
   if(id === "vDash" || id === "vKepsek") pasangFotoHead();
   if(ap){
-    $("nvNama").textContent = rl === "kepsek" ? (K.nama || "") + " · Kepala Sekolah" : (S.nama || "") + (S.kelas ? " · " + S.kelas : "");
+    $("nvNama").textContent = rl === "wali" ? (W.nama || "") + " · Wali Murid" : rl === "kepsek" ? (K.nama || "") + " · Kepala Sekolah" : (S.nama || "") + (S.kelas ? " · " + S.kelas : "");
     ukurNav(); setTimeout(ukurNav, 300);
-    var aktif = rl === "kepsek" ? KPETA[id] : PETA[id];
+    var aktif = rl === "kepsek" ? KPETA[id] : rl === "wali" ? WPETA[id] : PETA[id];
     Array.prototype.forEach.call(nav.querySelectorAll(".nb"), function(b){ b.classList.toggle("on", b.getAttribute("data-go") === aktif); });
   }
 };
@@ -2743,8 +2759,7 @@ function konfirmasi(teks, labelOk, fn){
 
   // menu Hari Libur untuk wali
   var v = document.createElement("div"); v.id = "vWLibur"; v.className = "card hidden";
-  v.innerHTML = '<h3>📅 Hari Libur Sekolah</h3><div id="wlInfo" class="b"></div><div id="wlList"></div><div id="wlMsg" class="msg"></div>' +
-    '<button type="button" class="gray" id="wlKembali">Kembali</button>';
+  v.innerHTML = '<h3>📅 Hari Libur Sekolah</h3><div id="wlInfo" class="b"></div><div id="wlList"></div><div id="wlMsg" class="msg"></div>';
   $("vWaliHasil").parentNode.insertBefore(v, $("vWaliHasil").nextSibling);
   VIEWS.push("vWLibur");
 
@@ -2774,11 +2789,63 @@ function konfirmasi(teks, labelOk, fn){
     if(LIBUR) gambarWLibur(); else say($("wlMsg"), "Memuat...", "info");
     muatLibur().then(function(){ gambarWLibur(); say($("wlMsg"), ""); }).catch(function(e){ say($("wlMsg"), galat(e), "err"); });
   }
-  var bt = document.createElement("button"); bt.type = "button"; bt.className = "gray"; bt.textContent = "📅 Hari Libur Sekolah";
-  var ref = document.querySelector('#vWaliHasil button[onclick="muatRekapWali()"]');
-  ref.parentNode.insertBefore(bt, ref.nextSibling);
-  bt.onclick = bukaWLibur;
-  $("wlKembali").onclick = function(){ show("vWaliHasil"); };
+  window.bukaWLibur = bukaWLibur;
+})();
+
+// ---------- v14: wali murid - bar bawah (Absensi, Libur, Pengaturan, Keluar) + pengaturan (tema, ganti PIN) ----------
+(function(){
+  var v = document.createElement("div"); v.id = "vWSet"; v.className = "card hidden";
+  v.innerHTML = '<h3>⚙️ Pengaturan</h3>' +
+    '<h4>Warna tema</h4><div class="row">' + Object.keys(TEMA).map(function(k){ return '<button type="button" class="sw" data-t="' + k + '" style="background:' + TEMA[k][0] + '"></button>'; }).join("") + '</div>' +
+    '<h4>Mode tampilan</h4><div class="row"><button type="button" class="seg" data-m="0">☀️ Terang</button><button type="button" class="seg" data-m="1">🌙 Gelap</button></div>' +
+    '<h4>Ganti PIN</h4>' +
+    '<input type="password" id="wpLama" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="PIN lama (6 angka)">' +
+    '<input type="password" id="wpBaru" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="PIN baru (6 angka)">' +
+    '<input type="password" id="wpUlang" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Ulangi PIN baru">' +
+    '<button type="button" id="wpSimpan">🔑 Simpan PIN Baru</button><div id="wpMsg" class="msg"></div>' +
+    '<div class="ver">Created By Furqon S<br>Versi ' + APP_VERSI + ' (' + APP_TGL + ')</div>';
+  $("vWaliHasil").parentNode.insertBefore(v, $("vWaliHasil").nextSibling);
+  VIEWS.push("vWSet");
+
+  window.isiWSet = function(){
+    say($("wpMsg"), "");
+    Array.prototype.forEach.call(v.querySelectorAll(".sw"), function(b){ b.classList.toggle("on", b.getAttribute("data-t") === P.tema); });
+    Array.prototype.forEach.call(v.querySelectorAll(".seg"), function(b){ b.classList.toggle("on", (b.getAttribute("data-m") === "1") === !!P.gelap); });
+  };
+  v.addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    if(b.hasAttribute("data-t")) P.tema = b.getAttribute("data-t");
+    else if(b.hasAttribute("data-m")) P.gelap = b.getAttribute("data-m") === "1";
+    else return;
+    simpan(); terapkan(); isiWSet();
+  });
+  ["wpLama", "wpBaru", "wpUlang"].forEach(function(id){
+    $(id).addEventListener("input", function(){ this.value = this.value.replace(/\D/g, "").slice(0, 6); });
+  });
+  $("wpSimpan").onclick = function(){
+    var m = $("wpMsg"), a = $("wpLama").value, b = $("wpBaru").value, c = $("wpUlang").value;
+    if(!/^\d{6}$/.test(a)){ say(m, "PIN lama harus 6 angka.", "err"); return; }
+    if(!/^\d{6}$/.test(b)){ say(m, "PIN baru harus 6 angka.", "err"); return; }
+    if(b !== c){ say(m, "Ulangi PIN baru tidak sama.", "err"); return; }
+    if(a === b){ say(m, "PIN baru harus berbeda dari PIN lama.", "err"); return; }
+    var bt = $("wpSimpan"); bt.disabled = true; say(m, "Menyimpan...", "info");
+    api("gantiPinWali", { token:W.token, pinLama:a, pinBaru:b }).then(function(r){
+      bt.disabled = false;
+      if(sesiHabis(r)){ keluarWali(r.message); return; }
+      if(!r || r.status !== "success"){ say(m, (r && r.message) || "Gagal mengganti PIN.", "err"); return; }
+      $("wpLama").value = ""; $("wpBaru").value = ""; $("wpUlang").value = "";
+      say(m, r.message, "ok");
+    }).catch(function(e){ bt.disabled = false; say(m, galat(e), "err"); });
+  };
+
+  var _go = go;
+  go = function(k){
+    if(NAVROLE !== "wali"){ _go(k); return; }
+    if(k === "out") keluarWali();
+    else if(k === "wa") show("vWaliHasil");
+    else if(k === "wl") bukaWLibur();
+    else if(k === "ws"){ isiWSet(); show("vWSet"); }
+  };
 })();
 
 // sesi yang dipulihkan saat refresh
