@@ -1572,6 +1572,9 @@ body.app #vKepsek #kList{flex:0 1 auto}
 #infoBox .jamSel select{flex:1;width:auto;margin-bottom:0;text-align:center}
 #infoBox .jamSel b{font-size:22px;color:var(--ink2)}
 #infoBox .jamBesar{margin:10px 0 4px;padding:10px 14px;border-radius:14px;background:var(--accent-soft);color:#b36b00;font-weight:800;font-size:15px;text-align:center}
+/* tarik ke bawah (wali): matikan muat ulang bawaan browser, ganti dengan muat ulang data */
+html.ptrWali,html.ptrWali body{overscroll-behavior-y:contain}
+#ptr{position:fixed;top:70px;left:0;right:0;margin:0 auto;width:max-content;max-width:90%;z-index:60;padding:9px 18px;border-radius:999px;background:var(--card);color:var(--brand);font-size:13.5px;font-weight:800;box-shadow:0 6px 20px rgba(0,0,0,.18);pointer-events:none;opacity:0;transform:translateY(-70px)}
 </style>
 <script>
 function mulaiUI(){
@@ -3176,7 +3179,7 @@ function konfirmasi(teks, labelOk, fn){
   ib.innerHTML = '<h4>Umumkan ke wali murid</h4>' +
     '<div class="row"><button type="button" class="seg" data-ij="Libur mendadak">🚨 Libur mendadak</button><button type="button" class="seg" data-ij="Pulang cepat">⏰ Pulang cepat</button><button type="button" class="seg" data-ij="Pengumuman">📢 Pengumuman</button></div>' +
     '<label class="izl" for="inMulai">Tanggal mulai</label>' +
-    '<div class="chips"><button type="button" class="chip" data-hr="0">Hari ini</button><button type="button" class="chip" data-hr="1">Besok</button></div><input type="date" id="inMulai">' +
+    '<div class="chips"><button type="button" class="chip" data-hr="0">Hari ini</button><button type="button" class="chip" data-hr="1">Besok</button><button type="button" class="chip" data-hr="2">Lusa</button></div><input type="date" id="inMulai">' +
     '<label class="izl" for="inSampai">Sampai tanggal (kosongkan bila 1 hari)</label><input type="date" id="inSampai">' +
     '<div id="inJamBox" style="display:none"><div class="izl">Jam pulang</div><div class="chips" id="inJamChips"></div>' +
       '<div class="jamSel"><select id="inJH" class="full" aria-label="Jam"></select><b>.</b><select id="inJM" class="full" aria-label="Menit"></select></div>' +
@@ -3204,11 +3207,19 @@ function konfirmasi(teks, labelOk, fn){
     var c = e.target.closest("button.chip"); if(!c) return;
     if(c.hasAttribute("data-jm")){ setJam(c.getAttribute("data-jm")); return; }
     if(c.hasAttribute("data-hr")){
-      var d = utcDari(wibSekarang().tgl); d.setUTCDate(d.getUTCDate() + Number(c.getAttribute("data-hr")));
-      var k = kunciDari(d); $("inMulai").value = k;
+      var k = tglPlus(Number(c.getAttribute("data-hr"))); $("inMulai").value = k;
       if($("inSampai").value && $("inSampai").value < k) $("inSampai").value = "";
+      tandaiTgl();
     }
   });
+  function tglPlus(n){ var d = utcDari(wibSekarang().tgl); d.setUTCDate(d.getUTCDate() + n); return kunciDari(d); }
+  function tandaiTgl(){
+    var v = $("inMulai").value;
+    Array.prototype.forEach.call(ib.querySelectorAll("button.chip[data-hr]"), function(b){
+      b.classList.toggle("on", !!v && tglPlus(Number(b.getAttribute("data-hr"))) === v);
+    });
+  }
+  $("inMulai").addEventListener("change", tandaiTgl);
 
   function tandaiInfo(){
     Array.prototype.forEach.call(ib.querySelectorAll(".seg"), function(b){
@@ -3231,7 +3242,7 @@ function konfirmasi(teks, labelOk, fn){
     a.min = n; a.max = kunciDari(mx); b.min = n; b.max = kunciDari(mx);
     if(!a.value || a.value < n) a.value = n;
     $("inUKelas").textContent = S.kelas ? "Kelas " + S.kelas : "Kelas saya";
-    tandaiInfo();
+    tandaiInfo(); tandaiTgl();
   }
 
   function segarkanInfoGuru(){
@@ -3251,7 +3262,7 @@ function konfirmasi(teks, labelOk, fn){
         bt.disabled = false;
         if(sesiHabis(r)){ logout(r.message); return; }
         if(!r || r.status !== "success"){ say(m, (r && r.message) || "Gagal mengirim.", "err"); return; }
-        $("inKet").value = ""; $("inSampai").value = ""; say(m, r.message, "ok");
+        $("inKet").value = ""; $("inSampai").value = ""; tandaiTgl(); say(m, r.message, "ok");
         segarkanInfoGuru();
       }).catch(function(e){ bt.disabled = false; say(m, galat(e), "err"); });
     };
@@ -3291,13 +3302,73 @@ function konfirmasi(teks, labelOk, fn){
   var _showInfo = show;
   show = function(id){
     _showInfo(id);
+    document.documentElement.classList.toggle("ptrWali", NAVROLE === "wali" && (id === "vWaliHasil" || id === "vWLibur" || id === "vWIzin"));
     if(id === "vWaliHasil" && NAVROLE === "wali"){
+      try{ if(W.token) sessionStorage.setItem("sesiWali", JSON.stringify({ token:W.token, nama:W.nama, kelas:W.kelas })); }catch(e){}
       muatInfoSekolah().then(function(){ gabungInfoKeLibur(); gambarInfoWali(); });
     } else if(id === "vLibur" && NAVROLE === "guru"){
       isiFormInfo();
       muatInfoSekolah().then(function(){ gabungInfoKeLibur(); gambarInfoGuru(); if(LIBUR) gambarLibur(); });
     }
   };
+
+  // ===== wali: keluar akun menghapus sesi tersimpan; muat ulang halaman tidak membuat wali keluar =====
+  var _keluarWali = keluarWali;
+  keluarWali = function(p){ try{ sessionStorage.removeItem("sesiWali"); }catch(e){} _keluarWali(p); };
+  try{
+    var sw = JSON.parse(sessionStorage.getItem("sesiWali") || "null");
+    if(sw && sw.token && !S.token && !K.token){
+      W.token = sw.token; W.nama = sw.nama; W.kelas = sw.kelas;
+      $("wJudul").textContent = "Absensi " + sw.nama; $("wInfo").textContent = "Kelas " + sw.kelas;
+      $("wBulan").value = bln(); $("wrRingkas").textContent = ""; $("wrList").innerHTML = ""; say($("wrMsg"), "");
+      show("vWaliHasil"); muatRekapWali();
+    }
+  }catch(e){}
+
+  // ===== wali: tarik layar ke bawah = muat ulang data (bukan memuat ulang halaman) =====
+  var ptr = el("div"); ptr.id = "ptr"; document.body.appendChild(ptr);
+  var py = 0, pd = 0, pa = false, pbusy = false;
+  function ptrAktif(){ return document.documentElement.classList.contains("ptrWali") && !pbusy; }
+  function scrollAtas(t){
+    if((window.pageYOffset || document.documentElement.scrollTop) > 0) return false;
+    for(var n = t; n && n !== document.body && n.nodeType === 1; n = n.parentNode){ if(n.scrollTop > 0) return false; }
+    return true;
+  }
+  function ptrSembunyi(){ ptr.style.transition = "transform .2s,opacity .2s"; ptr.style.transform = "translateY(-70px)"; ptr.style.opacity = "0"; }
+  function segarkanWali(){
+    if(!$("vWaliHasil").classList.contains("hidden")){
+      muatRekapWali();
+      return muatInfoSekolah(true).then(function(){ gabungInfoKeLibur(); gambarInfoWali(); });
+    }
+    if(!$("vWLibur").classList.contains("hidden")) return muatLibur(true).then(function(){ go("wl"); });
+    if(!$("vWIzin").classList.contains("hidden")){ go("iz"); return new Promise(function(ok){ setTimeout(ok, 700); }); }
+    return Promise.resolve();
+  }
+  document.addEventListener("touchstart", function(e){
+    pa = false; pd = 0;
+    if(!ptrAktif() || e.touches.length !== 1) return;
+    if(e.target.closest && e.target.closest("textarea,input,select")) return;
+    if(!scrollAtas(e.target)) return;
+    py = e.touches[0].clientY; pa = true; ptr.style.transition = "none";
+  }, { passive:true });
+  document.addEventListener("touchmove", function(e){
+    if(!pa) return;
+    var d = e.touches[0].clientY - py;
+    if(d <= 0){ pd = 0; return; }
+    if(!scrollAtas(e.target)){ pa = false; ptrSembunyi(); return; }
+    pd = Math.min(d * 0.5, 80);
+    ptr.textContent = pd >= 55 ? "⟳ Lepas untuk memuat ulang" : "↓ Tarik untuk memuat ulang";
+    ptr.style.transform = "translateY(" + (pd - 50) + "px)"; ptr.style.opacity = String(Math.min(pd / 40, 1));
+  }, { passive:true });
+  document.addEventListener("touchend", function(){
+    if(!pa) return;
+    pa = false;
+    if(pd < 55){ ptrSembunyi(); return; }
+    pbusy = true; ptr.textContent = "⟳ Memuat ulang..."; ptr.style.transition = "transform .2s"; ptr.style.transform = "translateY(8px)";
+    var selesai = function(){ setTimeout(function(){ pbusy = false; ptrSembunyi(); }, 500); };
+    segarkanWali().then(selesai, selesai);
+  }, { passive:true });
+  document.addEventListener("touchcancel", function(){ pa = false; ptrSembunyi(); }, { passive:true });
 })();
 
 // sesi yang dipulihkan saat refresh
