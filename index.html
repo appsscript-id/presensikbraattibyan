@@ -390,7 +390,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbwn40Ejlpcyeu1ch2kZJ-5pKcsImJut16lTqcRaopUgnPyIsZBhoAljs6WsWdvS7oL6qA/exec";
 // =====================================================================
  
-var APP_VERSI = "1.4.0";
+var APP_VERSI = "2.5.0";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1180,6 +1180,61 @@ details.kc summary::-webkit-details-marker{display:none}
 .ks{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 14px;border-top:1px solid var(--line);background:var(--card);font-size:13.5px;font-weight:600}
 .pil{font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:99px;white-space:nowrap}
 .pil.bl{background:var(--bad-soft);color:var(--bad)}
+/* v8: tampilan lucu untuk beranda, guru, wali, rekap, libur */
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes wob{0%,100%{transform:rotate(0)}30%{transform:rotate(-1.5deg)}60%{transform:rotate(1.5deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+.card{border-radius:28px}
+.head::before{content:"🌤️";position:absolute;right:16px;bottom:4px;font-size:34px;z-index:1}
+.head.kepsek::before{content:"☁️"}
+.kHero:empty{display:none}
+.kSt.kSt4{grid-template-columns:repeat(4,1fr)}
+/* beranda */
+#vPilih{position:relative;overflow:hidden}
+#vPilih::before,#vPilih::after{position:absolute;top:12px;font-size:24px;animation:fl 3s ease-in-out infinite}
+#vPilih::before{content:"⭐";left:14px}
+#vPilih::after{content:"🌈";right:14px;animation-delay:.8s}
+.lead::after{content:" 👇"}
+.role{border-radius:24px}
+.role:active{animation:wob .4s}
+.role .ic{border-radius:50%}
+/* login */
+#vLogin h3::before{content:"👩‍🏫 "}#vKLogin h3::before{content:"🧕 "}#vWali h3::before{content:"👨‍👩‍👧 "}
+.nb2{border-radius:22px;border:1.5px solid transparent}
+.nb2:hover{border-color:var(--brand)}
+.nb2 .av{font-size:0;background:var(--brand-soft)}
+.nb2 .av::before{font-size:22px;content:"🐻"}
+.nlist .nb2:nth-child(4n+2) .av::before{content:"🐰"}
+.nlist .nb2:nth-child(4n+3) .av::before{content:"🐥"}
+.nlist .nb2:nth-child(4n) .av::before{content:"🦊"}
+.pad{max-width:270px}
+.pad button{aspect-ratio:1/1;padding:0;border-radius:50%}
+.pd i{width:16px;height:16px;transition:transform .15s}
+.pd i.on{transform:scale(1.25)}
+/* dashboard guru */
+#stat div{border-radius:18px;border:0;box-shadow:0 2px 6px rgba(15,27,45,.06)}
+#stat div::before{display:block;font-size:17px}
+#stat .c0::before{content:"😊"}#stat .c1::before{content:"📝"}#stat .c2::before{content:"🤒"}#stat .c3::before{content:"😢"}#stat .c4::before{content:"⏳"}
+#pers .pb{height:12px}
+#pers .pb i{background:linear-gradient(90deg,#16a679,#7be0b5)}
+#vDash #listSiswa .siswa{background:var(--field);border-radius:20px;padding:8px 10px;margin-bottom:6px;border-bottom:0}
+#listSiswa .siswa::before{content:"🐻";flex:0 0 38px;height:38px;border-radius:50%;background:var(--brand-soft);display:flex;align-items:center;justify-content:center;font-size:20px}
+#listSiswa .siswa:nth-child(4n+2)::before{content:"🐰"}
+#listSiswa .siswa:nth-child(4n+3)::before{content:"🐥"}
+#listSiswa .siswa:nth-child(4n)::before{content:"🦊"}
+#ingat{border-radius:20px}
+video{border:4px solid var(--brand)}
+/* rekap & wali */
+#vWaliHasil h3{background:linear-gradient(135deg,#fdd453,#f6b81c);color:#4a3600;padding:14px 16px;border-radius:20px;margin-bottom:10px}
+#vWaliHasil h3::before{content:"🌟 "}
+.kal{gap:5px}.kal .kc{border-radius:50%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;padding:0}
+#wrList .siswa,#rkList .siswa,#krList .siswa{background:var(--field);border-radius:14px;padding:8px 12px;margin-bottom:5px;border-bottom:0}
+/* libur */
+#lbInfo{background:linear-gradient(135deg,#fff5e0,#ffe8f0);color:#a35a00;border-radius:18px}
+body.gelap #lbInfo{background:rgba(255,176,32,.14);color:#ffcf70}
+#vLibur .siswa{background:var(--field);border-radius:16px;padding:10px 12px;margin-bottom:6px;border-bottom:0}
+#vLibur .siswa.kini{background:var(--accent-soft)}
+#nav .nb span{transition:transform .15s}#nav .nb.on span{transform:scale(1.2)}
 .ver{text-align:center;font-size:12px;line-height:1.6;color:var(--muted);font-weight:600;margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}
 #vKoreksi:not(.hidden){max-height:calc(100vh - 104px);max-height:calc(100dvh - 104px);overflow-y:auto}
 #vKoreksi .siswa select{min-width:110px}
@@ -2073,7 +2128,7 @@ if(btGuru){
 
 // ---------- versi aplikasi (paling bawah menu Pengaturan) ----------
 vs.insertAdjacentHTML("beforeend",
-  '<div class="ver">Presensi Online KB RA At Tibyan<br>Versi ' + APP_VERSI + ' (' + APP_TGL + ')</div>');
+  '<div class="ver">Created By Furqon S<br>Versi ' + APP_VERSI + ' (' + APP_TGL + ')</div>');
 
 // ---------- v7: tampilan dashboard kepala sekolah ----------
 (function(){
@@ -2114,6 +2169,18 @@ renderRingkasan = function(){
     box.appendChild(d);
   });
 };
+
+// ---------- v8: ringkasan rekap bergaya lucu (guru, kepala sekolah, wali) + judul dashboard guru ----------
+var _trAsli = tampilRekap;
+tampilRekap = function(r, eR, eL){
+  _trAsli(r, eR, eL);
+  var h = r.hitung, pr = persen(h), E = ["😊", "📝", "🤒", "😢"], K4 = ["Hadir", "Izin", "Sakit", "Alpa"];
+  eR.className = "kHero";
+  eR.innerHTML = '<div class="kTop">' + ringK(pr < 0 ? 0 : pr) + '<div><b>' + esc(r.nama) + '</b><span>' + namaBulan(r.bulan) +
+    (pr < 0 ? " · belum ada data" : " · " + pr + "% hadir") + '</span></div></div><div class="kSt kSt4">' +
+    K4.map(function(s, i){ return '<div class="s' + i + '"><i>' + E[i] + '</i><b>' + h[s] + '</b><small>' + s + '</small></div>'; }).join("") + '</div>';
+};
+(function(){ var g = document.querySelector("#vDash .head h2"); if(g) g.textContent = "🍎 Dashboard Guru"; })();
 
 // sesi yang dipulihkan saat refresh
 if(!$("vDash").classList.contains("hidden")) show("vDash");
