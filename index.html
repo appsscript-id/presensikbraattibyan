@@ -390,7 +390,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "3.5.3";
+var APP_VERSI = "3.5.4";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -416,9 +416,16 @@ function apiSiap(el){
   if(API_URL.indexOf("https://script.google.com/") !== 0){ say(el, "API_URL belum diisi di index.html", "err"); return false; }
   return true;
 }
+function perangkat(){
+  var u = navigator.userAgent || "";
+  var os = /android/i.test(u) ? "Android" : /iphone|ipad|ipod/i.test(u) ? "iPhone/iPad" : /windows/i.test(u) ? "Windows" : /mac os/i.test(u) ? "Mac" : /linux/i.test(u) ? "Linux" : "Lainnya";
+  var br = /edg\//i.test(u) ? "Edge" : /opr\//i.test(u) ? "Opera" : /chrome|crios/i.test(u) ? "Chrome" : /firefox|fxios/i.test(u) ? "Firefox" : /safari/i.test(u) ? "Safari" : "";
+  var app = ""; try{ if(window.matchMedia && matchMedia("(display-mode: standalone)").matches) app = " (aplikasi terpasang)"; }catch(e){}
+  return os + (br ? " · " + br : "") + app;
+}
 function api(action, data){
   return fetch(API_URL, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" },
-    body: JSON.stringify(Object.assign({ action:action }, data || {})) }).then(function(r){ return r.json(); });
+    body: JSON.stringify(Object.assign({ action:action, ua:perangkat() }, data || {})) }).then(function(r){ return r.json(); });
 }
 function galat(e){ return "Gagal terhubung ke server. Cek internet / URL API. (" + (e && e.message ? e.message : e) + ")"; }
 function sesiHabis(r){ return r && String(r.message).indexOf("Sesi habis") >= 0; }
@@ -1342,7 +1349,7 @@ details.kc summary::-webkit-details-marker{display:none}
 #ingat{border-radius:20px}
 video{border:4px solid var(--brand)}
 /* rekap & wali */
-#vWaliHasil h3{background:linear-gradient(135deg,#fdd453,#f6b81c);color:#4a3600;padding:14px 16px;border-radius:20px;margin-bottom:10px}
+#vWaliHasil h3{background:linear-gradient(135deg,#16a679,#3cc79b);color:#fff;padding:14px 16px;border-radius:20px;margin-bottom:10px}
 #vWaliHasil h3::before{content:"🌟 "}
 .kal{gap:5px}.kal .kc{border-radius:50%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;padding:0}
 #wrList .siswa,#rkList .siswa,#krList .siswa{background:var(--field);border-radius:14px;padding:8px 12px;margin-bottom:5px;border-bottom:0}
@@ -2433,6 +2440,43 @@ document.addEventListener("click", function(e){
   var big = document.createElement("img"); big.alt = ""; big.src = im.src;
   ov.appendChild(big); document.body.appendChild(ov);
 });
+
+// ---------- Riwayat login (kepala sekolah): siapa saja yang membuka aplikasi ----------
+(function(){
+  var bar = $("vKepsek").querySelector(".bar"); if(!bar) return;
+  var v = document.createElement("div"); v.id = "vRiwayat"; v.className = "card hidden";
+  v.innerHTML = '<h3>🕒 Riwayat Login</h3>' +
+    '<select id="rlPeran" class="full"><option value="">Semua pengguna</option><option>Guru</option><option>Kepala Sekolah</option><option>Wali Murid</option></select>' +
+    '<button type="button" class="purple" id="rlMuat">Tampilkan</button>' +
+    '<div id="rlMsg" class="msg"></div><div id="rlInfo" class="b"></div><div id="rlList" style="margin-top:8px"></div>' +
+    '<button type="button" class="gray" id="rlKembali">Kembali</button>';
+  $("vDash").parentNode.insertBefore(v, $("vDash"));
+  VIEWS.push("vRiwayat");
+  var ICON = { "Guru":"🍎", "Kepala Sekolah":"🌈", "Wali Murid":"👨‍👩‍👧" };
+  function muat(){
+    $("rlInfo").textContent = ""; $("rlList").innerHTML = "";
+    ambil("getRiwayatLogin", { token:K.token, peran:$("rlPeran").value }, $("rlMsg"), function(r){
+      $("rlInfo").textContent = r.list.length ? r.list.length + " login terakhir" + (r.total > r.list.length ? " (dari " + r.total + ")" : "") : "";
+      var box = $("rlList");
+      if(!r.list.length){ box.textContent = "Belum ada riwayat login."; return; }
+      var hari = "";
+      r.list.forEach(function(x){
+        if(x.tanggal !== hari){ hari = x.tanggal; var h = document.createElement("div"); h.className = "msg"; h.style.cssText = "text-align:left;margin:12px 0 4px;font-size:12.5px;color:var(--muted)"; h.textContent = tglIndo(x.tanggal); box.appendChild(h); }
+        var row = document.createElement("div"); row.className = "siswa";
+        var nm = document.createElement("div"); nm.className = "nm";
+        nm.appendChild(document.createTextNode((ICON[x.peran] || "👤") + " " + x.nama));
+        var sm = document.createElement("small"); sm.textContent = x.peran + (x.kelas ? " · " + x.kelas : "") + (x.perangkat ? " · " + x.perangkat : ""); nm.appendChild(sm);
+        var jam = document.createElement("div"); jam.style.cssText = "font-weight:700;font-size:13px"; jam.textContent = String(x.waktu).substring(0, 5);
+        row.appendChild(nm); row.appendChild(jam); box.appendChild(row);
+      });
+    }, logout);
+  }
+  var bt = document.createElement("button"); bt.type = "button"; bt.className = "gray"; bt.id = "kRiwayatBtn"; bt.textContent = "🕒 Riwayat Login";
+  bt.onclick = function(){ $("rlList").innerHTML = ""; $("rlInfo").textContent = ""; say($("rlMsg"), ""); show("vRiwayat"); muat(); };
+  bar.parentNode.insertBefore(bt, bar.nextSibling);
+  $("rlMuat").onclick = muat; $("rlPeran").onchange = muat;
+  $("rlKembali").onclick = function(){ show("vKepsek"); };
+})();
 
 // v9: susun Rekap Siswa guru jadi dua kolom (dipakai di laptop; di HP tetap menumpuk seperti biasa)
 (function(){
