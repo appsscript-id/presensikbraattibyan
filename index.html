@@ -390,7 +390,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbwn40Ejlpcyeu1ch2kZJ-5pKcsImJut16lTqcRaopUgnPyIsZBhoAljs6WsWdvS7oL6qA/exec";
 // =====================================================================
  
-var APP_VERSI = "1.2.0";
+var APP_VERSI = "1.2.1";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1737,8 +1737,11 @@ function buatPdf(o){
     doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.text("KB RA At Tibyan", W / 2, 12, { align:"center" });
     doc.setFontSize(11); doc.text(o.judul, W / 2, 18, { align:"center" });
     doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.text(o.sub, W / 2, 23, { align:"center" });
+    var tot = 0, adaW = 0;
+    o.head[0].forEach(function(_, i){ var cw = o.cs && o.cs[i] && o.cs[i].cellWidth; if(cw){ tot += cw; adaW++; } });
+    var mg = (adaW === o.head[0].length && tot < W - 20) ? (W - tot) / 2 : 10;
     doc.autoTable({
-      head:o.head, body:o.body, startY:27, theme:"grid", margin:{ left:10, right:10 },
+      head:o.head, body:o.body, startY:27, theme:"grid", margin:{ left:mg, right:mg }, tableWidth:mg > 10 ? "wrap" : "auto",
       styles:{ fontSize:o.fs || 7, cellPadding:o.pad || 1, halign:"center", valign:"middle", lineColor:[150,150,150], lineWidth:0.1, textColor:[30,30,30] },
       headStyles:{ fillColor:[47,125,246], textColor:255, fontStyle:"bold" },
       columnStyles:o.cs || {}, didParseCell:o.sel
@@ -1747,7 +1750,7 @@ function buatPdf(o){
     doc.setFontSize(8);
     var ket = doc.splitTextToSize(o.ket, W - 20);
     if(y + ket.length * 4 + 40 > H){ doc.addPage(); y = 15; }
-    doc.text(ket, 10, y); y += ket.length * 4 + 6;
+    doc.text(ket, W / 2, y, { align:"center" }); y += ket.length * 4 + 6;
     doc.setFontSize(9);
     var tglCetak = new Date().toLocaleDateString("id-ID", { day:"numeric", month:"long", year:"numeric" });
     doc.text("Dicetak: " + tglCetak, W - 45, y, { align:"center" });
