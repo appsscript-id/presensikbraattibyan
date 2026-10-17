@@ -303,7 +303,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 </div>
  
 <div id="vKepsek" class="hidden">
-  <div class="head kepsek"><h2>Dashboard Kepala Sekolah</h2><div>Selamat datang, <b id="kNama"></b></div></div>
+  <div class="head kepsek"><h2>Dashboard Kepala Sekolah</h2><div><span id="kSapa">Selamat datang</span>, <b id="kNama"></b></div></div>
   <div class="card">
     <h3>Ringkasan Absensi</h3>
     <input type="date" id="kTanggal">
@@ -1297,10 +1297,10 @@ details.kc summary::-webkit-details-marker{display:none}
 .card{border-radius:28px}
 .head::before{content:"🌤️";position:absolute;right:16px;bottom:4px;font-size:34px;z-index:1}
 .head.kepsek::before{content:"☁️"}
-#vDash .head[data-wkt="pagi"]::before{content:"🌅"}
-#vDash .head[data-wkt="siang"]::before{content:"☀️"}
-#vDash .head[data-wkt="sore"]::before{content:"🌇"}
-#vDash .head[data-wkt="malam"]::before{content:"🌙"}
+#vDash .head[data-wkt="pagi"]::before,#vKepsek .head[data-wkt="pagi"]::before{content:"🌅"}
+#vDash .head[data-wkt="siang"]::before,#vKepsek .head[data-wkt="siang"]::before{content:"☀️"}
+#vDash .head[data-wkt="sore"]::before,#vKepsek .head[data-wkt="sore"]::before{content:"🌇"}
+#vDash .head[data-wkt="malam"]::before,#vKepsek .head[data-wkt="malam"]::before{content:"🌙"}
 .kHero:empty{display:none}
 .kSt.kSt4{grid-template-columns:repeat(4,1fr)}
 /* beranda */
@@ -1459,30 +1459,30 @@ body.app #vKepsek #kList{flex:0 1 auto}
 /* ===== v12: kartu putih kepala sekolah memanjang sampai bar bawah; isi membesar mengikuti tinggi kartu ===== */
 @media (max-width:899px){
   body.app #vKepsek:not(.hidden){height:calc(100vh - var(--navh,76px) - 20px) !important;height:calc(100dvh - var(--navh,76px) - 20px) !important}
-  body.app #vKepsek .card{flex:1 1 0 !important;padding:clamp(12px,2.2dvh,22px) 14px}
+  body.app #vKepsek .card{flex:1 1 0 !important;padding:clamp(10px,1.6dvh,16px) 14px}
   body.app #vKepsek .head{padding:clamp(10px,1.8dvh,18px) 16px;margin-bottom:clamp(8px,1.4dvh,14px)}
   body.app #vKepsek .head h2{font-size:clamp(16px,2.6dvh,22px)}
   body.app #vKepsek .head div{font-size:clamp(12.5px,1.9dvh,15px)}
   body.app #vKepsek input[type=date]{padding:clamp(9px,1.6dvh,16px) 14px;font-size:clamp(15px,2dvh,18px)}
   body.app #vKepsek .bar button{padding:clamp(9px,1.6dvh,16px) 8px;font-size:clamp(13px,1.9dvh,16px)}
-  body.app #vKepsek .kHero{padding:clamp(10px,1.8dvh,20px) 12px;margin-top:clamp(8px,1.4dvh,14px);flex:none}
-  body.app #vKepsek .kTop svg{width:clamp(60px,10dvh,110px);height:clamp(60px,10dvh,110px)}
+  body.app #vKepsek .kHero{padding:clamp(8px,1.3dvh,14px) 12px;margin-top:clamp(6px,1dvh,10px);flex:none}
+  body.app #vKepsek .kTop svg{width:clamp(56px,8dvh,84px);height:clamp(56px,8dvh,84px)}
   body.app #vKepsek .kTop b{font-size:clamp(14.5px,2.2dvh,19px)}
   body.app #vKepsek .kTop span{font-size:clamp(12.5px,1.9dvh,15px)}
-  body.app #vKepsek .kSt{margin-top:clamp(8px,1.5dvh,16px);gap:6px}
-  body.app #vKepsek .kSt div{padding:clamp(4px,1dvh,12px) 2px}
-  body.app #vKepsek .kSt i{font-size:clamp(15px,2.4dvh,24px)}
-  body.app #vKepsek .kSt b{font-size:clamp(14px,2.2dvh,20px)}
+  body.app #vKepsek .kSt{margin-top:clamp(6px,1.1dvh,12px);gap:6px}
+  body.app #vKepsek .kSt div{padding:clamp(3px,.7dvh,8px) 2px}
+  body.app #vKepsek .kSt i{font-size:clamp(14px,2dvh,20px)}
+  body.app #vKepsek .kSt b{font-size:clamp(14px,1.9dvh,18px)}
   body.app #vKepsek .kSt small{font-size:clamp(9.5px,1.5dvh,12px)}
   /* daftar kelas: mengisi sisa tinggi kartu, kartu kelas ikut membesar dan tersebar rata */
   body.app #vKepsek #kList{flex:1 1 0 !important;min-height:0;display:flex;flex-direction:column;justify-content:space-between}
-  body.app #vKepsek details.kc{margin-top:clamp(8px,1.4dvh,16px);flex:none}
-  body.app #vKepsek details.kc summary{padding:clamp(8px,2.2dvh,30px) 14px;gap:12px}
-  body.app #vKepsek .ki{flex:0 0 clamp(36px,6.5dvh,70px);height:clamp(36px,6.5dvh,70px);font-size:clamp(19px,3.4dvh,36px);border-radius:16px}
-  body.app #vKepsek .kn b{font-size:clamp(14px,2.3dvh,20px)}
+  body.app #vKepsek details.kc{margin-top:clamp(6px,1dvh,10px);flex:0 1 auto;min-height:0}
+  body.app #vKepsek details.kc summary{padding:clamp(7px,1.3dvh,16px) 14px;gap:12px}
+  body.app #vKepsek .ki{flex:0 0 clamp(36px,5dvh,56px);height:clamp(36px,5dvh,56px);font-size:clamp(19px,2.8dvh,28px);border-radius:16px}
+  body.app #vKepsek .kn b{font-size:clamp(14px,2dvh,18px)}
   body.app #vKepsek .kn small{font-size:clamp(11px,1.7dvh,14px)}
   body.app #vKepsek .kn em{height:clamp(5px,.9dvh,9px);margin-top:clamp(4px,.8dvh,9px)}
-  body.app #vKepsek .kp{font-size:clamp(14px,2.4dvh,22px)}
+  body.app #vKepsek .kp{font-size:clamp(14px,2.1dvh,19px)}
   body.app #vKepsek .ks{padding:clamp(7px,1.2dvh,12px) 12px;font-size:clamp(13px,1.8dvh,15px)}
 }
 </style>
@@ -1844,6 +1844,9 @@ function salamWaktu(){
   var sp = $("dSapa"), hd = document.querySelector("#vDash .head");
   if(sp) sp.textContent = "Selamat " + w.charAt(0).toUpperCase() + w.slice(1);
   if(hd) hd.setAttribute("data-wkt", w);
+  var sk = $("kSapa"), hk = document.querySelector("#vKepsek .head");
+  if(sk) sk.textContent = "Selamat " + w.charAt(0).toUpperCase() + w.slice(1);
+  if(hk) hk.setAttribute("data-wkt", w);
 }
 salamWaktu(); setInterval(salamWaktu, 30000);
 setInterval(function(){
