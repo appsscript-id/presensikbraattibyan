@@ -390,6 +390,9 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbwn40Ejlpcyeu1ch2kZJ-5pKcsImJut16lTqcRaopUgnPyIsZBhoAljs6WsWdvS7oL6qA/exec";
 // =====================================================================
  
+var APP_VERSI = "1.1.0";
+var APP_TGL = "17 Oktober 2026";
+
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
 var FACEAPI_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js";
 var THRESHOLD = 0.5, MARGIN = 0.03, JUMLAH = 3, JEDA = 1000;
@@ -1148,6 +1151,18 @@ body.gelap #ingat{background:rgba(255,176,32,.14);color:#ffcf70;border-color:rgb
   #vKRekap #krList,#vRekap #rkList,#vWaliHasil #wrList,#vKepsek #kList{max-height:none !important;overflow:visible !important}
   #vSet:not(.hidden){max-height:none !important;overflow:visible !important}
 }
+/* v6: ubah absen + versi */
+.ver{text-align:center;font-size:12px;line-height:1.6;color:var(--muted);font-weight:600;margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}
+#vKoreksi:not(.hidden){max-height:calc(100vh - 104px);max-height:calc(100dvh - 104px);overflow-y:auto}
+#vKoreksi .siswa select{min-width:110px}
+#perBar select{flex:1;min-width:0}
+@media (min-width:900px){
+  #vKoreksi:not(.hidden){max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px)}
+  body.app #vKoreksi{max-width:620px;width:100%;margin-left:auto;margin-right:auto}
+}
+@media (max-width:899px){
+  #vKoreksi:not(.hidden){max-height:none;overflow:visible}
+}
 </style>
 
 <script>
@@ -1677,6 +1692,303 @@ vs.addEventListener("change", function(e){
   if(e.target.id === "setNada"){ P.nada = e.target.value; simpan(); klik(); return; }
   var k = e.target.getAttribute("data-k"); if(k){ P[k] = e.target.checked; simpan(); terapkan(); }
 });
+
+// ====== v6: rekap semester/tahun, PDF, ubah absen hari lalu, versi ======
+var JSPDF_URL = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+var AUTOTABLE_URL = "https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js";
+var BLN_PDK = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+var WARNA = { H:[22,166,121], I:[245,165,36], S:[47,125,246], A:[229,72,77] };
+
+function muatSkrip(u){
+  return new Promise(function(ok, gagal){
+    var s = document.createElement("script"); s.src = u; s.onload = ok;
+    s.onerror = function(){ gagal(new Error("Gagal memuat pustaka PDF. Cek internet.")); };
+    document.head.appendChild(s);
+  });
+}
+function muatPdf(){
+  return (window.jspdf ? Promise.resolve() : muatSkrip(JSPDF_URL)).then(function(){
+    return window.jspdf.jsPDF.API.autoTable ? null : muatSkrip(AUTOTABLE_URL);
+  });
+}
+function tbBtn(bar, teks, fn){
+  var b = document.createElement("button"); b.type = "button"; b.className = "gray"; b.textContent = teks;
+  b.onclick = function(){
+    var p; try{ p = fn(); }catch(e){ alert(e.message); return; }
+    if(p && p.then){
+      b.disabled = true; b.textContent = "Membuat PDF...";
+      p.catch(function(e){ alert("Gagal: " + (e && e.message ? e.message : e)); })
+       .then(function(){ b.disabled = false; b.textContent = teks; });
+    }
+  };
+  bar.appendChild(b);
+}
+function simpanCSV(nama, L){
+  var csv = "\ufeff" + L.map(function(a){ return a.map(function(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }).join(";"); }).join("\r\n");
+  var a = document.createElement("a"), url = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8" }));
+  a.href = url; a.download = nama;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+
+function buatPdf(o){
+  return muatPdf().then(function(){
+    var doc = new window.jspdf.jsPDF({ orientation:"landscape", unit:"mm", format:"a4" });
+    var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.text("KB RA At Tibyan", W / 2, 12, { align:"center" });
+    doc.setFontSize(11); doc.text(o.judul, W / 2, 18, { align:"center" });
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.text(o.sub, W / 2, 23, { align:"center" });
+    doc.autoTable({
+      head:o.head, body:o.body, startY:27, theme:"grid", margin:{ left:10, right:10 },
+      styles:{ fontSize:o.fs || 7, cellPadding:o.pad || 1, halign:"center", valign:"middle", lineColor:[150,150,150], lineWidth:0.1, textColor:[30,30,30] },
+      headStyles:{ fillColor:[47,125,246], textColor:255, fontStyle:"bold" },
+      columnStyles:o.cs || {}, didParseCell:o.sel
+    });
+    var y = doc.lastAutoTable.finalY + 6;
+    doc.setFontSize(8);
+    var ket = doc.splitTextToSize(o.ket, W - 20);
+    if(y + ket.length * 4 + 40 > H){ doc.addPage(); y = 15; }
+    doc.text(ket, 10, y); y += ket.length * 4 + 6;
+    doc.setFontSize(9);
+    var tglCetak = new Date().toLocaleDateString("id-ID", { day:"numeric", month:"long", year:"numeric" });
+    doc.text("Dicetak: " + tglCetak, W - 45, y, { align:"center" });
+    doc.text("Mengetahui,", 45, y, { align:"center" });
+    doc.text("Kepala Sekolah", 45, y + 4.5, { align:"center" });
+    doc.text("Guru Kelas", W - 45, y + 4.5, { align:"center" });
+    doc.text("(" + (K.token && K.nama ? K.nama : ".....................") + ")", 45, y + 26, { align:"center" });
+    doc.text("(" + (S.token && S.nama ? S.nama : ".....................") + ")", W - 45, y + 26, { align:"center" });
+    doc.save(o.file);
+  });
+}
+
+function pdfBulan(r){
+  var y = Number(r.bulan.substring(0, 4)), m = Number(r.bulan.substring(5, 7)), d;
+  function wk(t){ var w = new Date(y, m - 1, t).getDay(); return w === 0 || w === 6; }
+  var hd = ["Nama"], cs = { 0:{ halign:"left", cellWidth:38 } };
+  for(d = 1; d <= r.hari; d++){ hd.push(String(d)); cs[d] = { cellWidth:5.6 }; }
+  ["H","I","S","A","%"].forEach(function(t, i){ hd.push(t); cs[r.hari + 1 + i] = { cellWidth:8 }; });
+  var body = r.siswa.map(function(s){
+    var c = s.hitung, pr = persen(c), row = [s.nama];
+    for(d = 1; d <= r.hari; d++) row.push(s.hari[d] ? s.hari[d].charAt(0) : "");
+    row.push(String(c.Hadir), String(c.Izin), String(c.Sakit), String(c.Alpa), pr >= 0 ? pr + "%" : "-");
+    return row;
+  });
+  return buatPdf({
+    judul:"Rekap Absensi Kelas " + r.kelas, sub:namaBulan(r.bulan) + " - " + r.siswa.length + " murid",
+    head:[hd], body:body, fs:6.5, pad:0.8, cs:cs, file:"Absensi " + r.kelas + " " + r.bulan + ".pdf",
+    ket:"H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu.",
+    sel:function(c){
+      var i = c.column.index;
+      if(i >= 1 && i <= r.hari){
+        if(c.section === "head" && wk(i)) c.cell.styles.fillColor = [229,72,77];
+        if(c.section === "body"){
+          var v = c.cell.raw, w = WARNA[v];
+          if(w){ c.cell.styles.fillColor = w; c.cell.styles.textColor = v === "I" ? [61,42,0] : 255; }
+          else if(wk(i)) c.cell.styles.fillColor = [243,217,218];
+        }
+      }
+      if(c.section === "body" && (i === 0 || i === r.hari + 5)){
+        var pr = persen(r.siswa[c.row.index].hitung);
+        if(pr >= 0 && pr < 75) c.cell.styles.textColor = [179,38,43];
+      }
+    }
+  });
+}
+
+function labelPeriode(r){
+  return r.semester === 1 ? "Semester 1 (Juli - Desember " + r.tahun + ")"
+       : r.semester === 2 ? "Semester 2 (Januari - Juni " + (r.tahun + 1) + ")"
+       : "Tahun Ajaran " + r.tahun + "/" + (r.tahun + 1);
+}
+function fileLabel(r){
+  return r.semester ? "Semester " + r.semester + " " + (r.semester === 1 ? r.tahun : r.tahun + 1) : "TA " + r.tahun + "-" + (r.tahun + 1);
+}
+function ttBulan(b){ return BLN_PDK[Number(b.substring(5, 7)) - 1] + " " + b.substring(2, 4); }
+function selBulan(c){
+  var t = c.Hadir + c.Izin + c.Sakit + c.Alpa;
+  return t ? c.Hadir + "/" + c.Izin + "/" + c.Sakit + "/" + c.Alpa : "-";
+}
+function htmlPeriode(r){
+  var h = '<table class="tb"><thead><tr><th>Nama</th>';
+  r.bulan.forEach(function(b){ h += "<th>" + ttBulan(b) + "</th>"; });
+  h += "<th>H</th><th>I</th><th>S</th><th>A</th><th>%</th></tr></thead><tbody>";
+  r.siswa.forEach(function(s){
+    var c = s.hitung, pr = persen(c);
+    h += '<tr class="' + (pr >= 0 && pr < 75 ? "rendah" : "") + '"><td>' + esc(s.nama) + "</td>";
+    s.bln.forEach(function(x){ h += "<td>" + selBulan(x) + "</td>"; });
+    h += '<td class="sum">' + c.Hadir + '</td><td class="sum">' + c.Izin + '</td><td class="sum">' + c.Sakit + '</td><td class="sum">' + c.Alpa +
+         '</td><td class="sum pr">' + (pr >= 0 ? pr + "%" : "-") + "</td></tr>";
+  });
+  return h + "</tbody></table>";
+}
+function csvPeriode(r){
+  var hd = ["Nama"];
+  r.bulan.forEach(function(b){ var t = ttBulan(b); hd.push(t + " H", t + " I", t + " S", t + " A"); });
+  hd.push("Total Hadir", "Total Izin", "Total Sakit", "Total Alpa", "% Hadir");
+  var L = [hd];
+  r.siswa.forEach(function(s){
+    var row = [s.nama], c = s.hitung, pr = persen(c);
+    s.bln.forEach(function(x){ row.push(x.Hadir, x.Izin, x.Sakit, x.Alpa); });
+    row.push(c.Hadir, c.Izin, c.Sakit, c.Alpa, pr >= 0 ? pr + "%" : "-"); L.push(row);
+  });
+  simpanCSV("Absensi " + r.kelas + " " + fileLabel(r) + ".csv", L);
+}
+function pdfPeriode(r){
+  var n = r.bulan.length, hd = ["No", "Nama"], cs = { 0:{ cellWidth:8 }, 1:{ halign:"left", cellWidth:45 } };
+  var lebar = Math.min(18, Math.floor((277 - 8 - 45 - 45) / n * 10) / 10);
+  r.bulan.forEach(function(b, i){ hd.push(ttBulan(b)); cs[2 + i] = { cellWidth:lebar }; });
+  ["H","I","S","A","%"].forEach(function(t, i){ hd.push(t); cs[n + 2 + i] = { cellWidth:9 }; });
+  var body = r.siswa.map(function(s, i){
+    var c = s.hitung, pr = persen(c), row = [String(i + 1), s.nama];
+    s.bln.forEach(function(x){ row.push(selBulan(x)); });
+    row.push(String(c.Hadir), String(c.Izin), String(c.Sakit), String(c.Alpa), pr >= 0 ? pr + "%" : "-");
+    return row;
+  });
+  return buatPdf({
+    judul:"Rekap Absensi Kelas " + r.kelas, sub:labelPeriode(r) + " - " + r.siswa.length + " murid",
+    head:[hd], body:body, fs:n > 6 ? 6.5 : 7.5, pad:1, cs:cs, file:"Absensi " + r.kelas + " " + fileLabel(r) + ".pdf",
+    ket:"Isi kolom bulan = Hadir/Izin/Sakit/Alpa. H = total Hadir, I = Izin, S = Sakit, A = Alpa, % = persentase hadir. Nama merah = kehadiran di bawah 75%.",
+    sel:function(c){
+      var i = c.column.index;
+      if(c.section === "body" && (i === 1 || i === n + 6)){
+        var pr = persen(r.siswa[c.row.index].hitung);
+        if(pr >= 0 && pr < 75) c.cell.styles.textColor = [179,38,43];
+      }
+    }
+  });
+}
+function catatanTabel(box, teks){
+  var n = document.createElement("div"); n.className = "msg"; n.style.fontSize = "11.5px"; n.textContent = teks; box.appendChild(n);
+}
+function renderPeriode(box, r){
+  box.innerHTML = "";
+  var bar = document.createElement("div"); bar.className = "tbbar";
+  tbBtn(bar, "⬇️ Excel", function(){ csvPeriode(r); });
+  tbBtn(bar, "📄 PDF", function(){ return pdfPeriode(r); });
+  box.appendChild(bar);
+  var w = document.createElement("div"); w.className = "tbw"; w.innerHTML = htmlPeriode(r); box.appendChild(w);
+  catatanTabel(box, "Isi kolom bulan = Hadir/Izin/Sakit/Alpa. Nama merah = kehadiran di bawah 75%.");
+}
+renderTabel = function(box, r){
+  box.innerHTML = "";
+  var bar = document.createElement("div"); bar.className = "tbbar";
+  tbBtn(bar, "⬇️ Excel", function(){ unduhCSV(r); });
+  tbBtn(bar, "📄 PDF", function(){ return pdfBulan(r); });
+  tbBtn(bar, "🖨️ Cetak", function(){ cetakTabel(r); });
+  box.appendChild(bar);
+  var w = document.createElement("div"); w.className = "tbw"; w.innerHTML = htmlTabel(r); box.appendChild(w);
+  catatanTabel(box, "H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu (libur).");
+};
+
+function bangunPeriode(refSel, ambilArg, msgId, ringId, listId, getToken){
+  var ref = document.querySelector(refSel); if(!ref) return null;
+  var tb = ref.nextElementSibling || ref;
+  var n = wibSekarang(), y = +n.tgl.substring(0, 4), m = +n.tgl.substring(5, 7), ta = m >= 7 ? y : y - 1;
+  var bar = document.createElement("div"); bar.className = "bar perBar"; bar.style.marginTop = "8px";
+  var sa = document.createElement("select");
+  [ta - 2, ta - 1, ta].forEach(function(t){
+    var o = document.createElement("option"); o.value = t; o.textContent = "TA " + t + "/" + (t + 1); sa.appendChild(o);
+  });
+  sa.value = ta;
+  var ss = document.createElement("select");
+  [["1", "Semester 1 (Jul-Des)"], ["2", "Semester 2 (Jan-Jun)"], ["0", "Satu tahun ajaran"]].forEach(function(a){
+    var o = document.createElement("option"); o.value = a[0]; o.textContent = a[1]; ss.appendChild(o);
+  });
+  ss.value = m >= 7 ? "1" : "2";
+  bar.appendChild(sa); bar.appendChild(ss);
+  var bt = document.createElement("button"); bt.type = "button"; bt.className = "gray"; bt.textContent = "📈 Rekap Semester / Tahun";
+  bt.onclick = function(){
+    var arg = ambilArg(); if(!arg) return;
+    $(ringId).textContent = "";
+    ambil("tabelPeriode", Object.assign({ token:getToken(), tahun:Number(sa.value), semester:Number(ss.value) }, arg), $(msgId), function(r){
+      $(ringId).textContent = labelPeriode(r) + " · Kelas " + r.kelas + " · " + r.siswa.length + " murid";
+      renderPeriode($(listId), r);
+    }, logout);
+  };
+  tb.parentNode.insertBefore(bar, tb.nextSibling);
+  bar.parentNode.insertBefore(bt, bar.nextSibling);
+  return bt;
+}
+var btGuru = bangunPeriode('#vRekap button[onclick="muatRekap()"]', function(){ return {}; },
+  "rkMsg", "rkRingkas", "rkList", function(){ return S.token; });
+bangunPeriode('#vKRekap button[onclick="muatKRekap()"]', function(){
+  var k = K.kelas[Number($("krKelas").value)];
+  if(!k){ say($("krMsg"), "Pilih kelas dulu.", "err"); return null; }
+  return { kelas:k.kelas };
+}, "krMsg", "krRingkas", "krList", function(){ return K.token; });
+
+// ---------- UBAH ABSEN HARI LALU (guru) ----------
+var KK = [];
+var vk = document.createElement("div"); vk.id = "vKoreksi"; vk.className = "card hidden";
+vk.innerHTML = '<h3>✏️ Ubah Absen</h3>' +
+  '<p style="font-size:13.5px;color:var(--muted);margin:-6px 0 10px">Pilih tanggal, ubah status murid, lalu simpan. Pilih "Belum absen" untuk menghapus catatan.</p>' +
+  '<input type="date" id="kkTgl"><button type="button" id="kkTampil">Tampilkan</button>' +
+  '<div id="kkMsg" class="msg"></div><div id="kkList"></div>' +
+  '<button type="button" id="kkSimpan" class="hidden">💾 Simpan Perubahan</button>' +
+  '<button type="button" class="gray" id="kkKembali">Kembali</button>';
+$("vDash").parentNode.insertBefore(vk, $("vDash"));
+VIEWS.push("vKoreksi"); PETA.vKoreksi = "rek";
+
+function bukaKoreksi(){
+  var t = wibSekarang().tgl;
+  $("kkTgl").max = t; if(!$("kkTgl").value) $("kkTgl").value = t;
+  KK = []; $("kkList").innerHTML = ""; $("kkSimpan").classList.add("hidden"); say($("kkMsg"), "");
+  show("vKoreksi");
+}
+function infoUbah(){
+  var n = KK.filter(function(x){ return x.nilai !== x.awal; }).length;
+  say($("kkMsg"), n ? n + " perubahan belum disimpan." : "", "info");
+}
+function gambarKoreksi(){
+  var box = $("kkList"); box.innerHTML = "";
+  KK.forEach(function(x){
+    var row = document.createElement("div"); row.className = "siswa";
+    var nm = document.createElement("div"); nm.className = "nm"; nm.textContent = x.nama;
+    if(x.jam){ var sm = document.createElement("small"); sm.textContent = "Tercatat pukul " + x.jam; nm.appendChild(sm); }
+    var sel = document.createElement("select");
+    ["", "Hadir", "Izin", "Sakit", "Alpa"].forEach(function(st){
+      var op = document.createElement("option"); op.value = st; op.textContent = st || "Belum absen"; sel.appendChild(op);
+    });
+    sel.value = x.nilai; sel.onchange = function(){ x.nilai = sel.value; infoUbah(); };
+    row.appendChild(nm); row.appendChild(sel); box.appendChild(row);
+  });
+  $("kkSimpan").classList.toggle("hidden", !KK.length);
+}
+function muatKoreksi(){
+  var t = $("kkTgl").value;
+  if(!t){ say($("kkMsg"), "Pilih tanggal dulu.", "err"); return; }
+  ambil("getAbsenTanggal", { token:S.token, tanggal:t }, $("kkMsg"), function(r){
+    KK = r.siswa.map(function(x){ return { nama:x.nama, awal:x.status || "", nilai:x.status || "", jam:x.jam || "" }; });
+    gambarKoreksi();
+    var wd = utcDari(t).getUTCDay(), cat = LIBURMAP[t] || ((wd === 0 || wd === 6) ? "akhir pekan" : "");
+    if(cat) say($("kkMsg"), "Catatan: tanggal ini libur (" + cat + ").", "info");
+  }, logout);
+}
+$("kkTampil").onclick = muatKoreksi;
+$("kkKembali").onclick = function(){ show("vRekap"); };
+$("kkSimpan").onclick = function(){
+  var t = $("kkTgl").value;
+  var rec = KK.filter(function(x){ return x.nilai !== x.awal; }).map(function(x){ return { nama:x.nama, status:x.nilai }; });
+  if(!rec.length){ say($("kkMsg"), "Belum ada perubahan.", "err"); return; }
+  var hapus = rec.filter(function(x){ return !x.status; }).length;
+  if(hapus && !confirm(hapus + " catatan absen akan dihapus. Lanjutkan?")) return;
+  say($("kkMsg"), "Menyimpan...", "info"); $("kkSimpan").disabled = true;
+  api("simpanAbsenTanggal", { token:S.token, tanggal:t, records:rec }).then(function(r){
+    $("kkSimpan").disabled = false;
+    if(sesiHabis(r)){ logout(r.message); return; }
+    if(r.status !== "success"){ say($("kkMsg"), r.message, "err"); return; }
+    KK.forEach(function(x){ x.awal = x.nilai; });
+    say($("kkMsg"), r.message, "ok");
+    if(t === wibSekarang().tgl) muatSiswa();
+  }).catch(function(e){ $("kkSimpan").disabled = false; say($("kkMsg"), galat(e), "err"); });
+};
+if(btGuru){
+  var kb = document.createElement("button"); kb.type = "button"; kb.className = "gray"; kb.textContent = "✏️ Ubah Absen Hari Lalu";
+  kb.onclick = bukaKoreksi; btGuru.parentNode.insertBefore(kb, btGuru.nextSibling);
+}
+
+// ---------- versi aplikasi (paling bawah menu Pengaturan) ----------
+vs.insertAdjacentHTML("beforeend",
+  '<div class="ver">Presensi Online KB RA At Tibyan<br>Versi ' + APP_VERSI + ' (' + APP_TGL + ')</div>');
 
 // sesi yang dipulihkan saat refresh
 if(!$("vDash").classList.contains("hidden")) show("vDash");
