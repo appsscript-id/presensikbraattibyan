@@ -777,9 +777,12 @@ function renderSiswa(){
       var op = document.createElement("option"); op.value = st; op.textContent = st || "-"; sel.appendChild(op);
     });
     sel.value = x.nilai; sel.onchange = function(){ x.nilai = sel.value; }; x.el = sel;
-    if(x.foto){
+    if(fotoValid(x.foto)){
       var im = document.createElement("img"); im.className = "fotoM"; im.alt = ""; im.src = x.foto;
       row.classList.add("berfoto"); row.appendChild(im);
+    } else {
+      var ik = document.createElement("span"); ik.className = "ini"; ik.textContent = String(x.nama).charAt(0).toUpperCase();
+      row.appendChild(ik);
     }
     row.appendChild(nm); row.appendChild(sel); box.appendChild(row);
   });
@@ -1251,14 +1254,9 @@ details.kc summary::-webkit-details-marker{display:none}
 #vLogin h3::before{content:"👩‍🏫 "}#vKLogin h3::before{content:"🧕 "}#vWali h3::before{content:"👨‍👩‍👧 "}
 .nb2{border-radius:22px;border:1.5px solid transparent}
 .nb2:hover{border-color:var(--brand)}
-.nb2 .av{font-size:0;background:var(--brand-soft)}
-.nb2 .av::before{font-size:22px;content:"🐻"}
-.nb2 .av.avf::before{display:none}
+.nb2 .av{font-size:18px}
 .nb2 .av.avf{overflow:hidden;padding:0}
 .nb2 .av.avf img{width:100%;height:100%;object-fit:cover;display:block}
-.nlist .nb2:nth-child(4n+2) .av::before{content:"🐰"}
-.nlist .nb2:nth-child(4n+3) .av::before{content:"🐥"}
-.nlist .nb2:nth-child(4n) .av::before{content:"🦊"}
 .pad{max-width:270px}
 .pad button{aspect-ratio:1/1;padding:0;border-radius:50%}
 .pd i{width:16px;height:16px;transition:transform .15s}
@@ -1270,11 +1268,7 @@ details.kc summary::-webkit-details-marker{display:none}
 #pers .pb{height:12px}
 #pers .pb i{background:linear-gradient(90deg,#16a679,#7be0b5)}
 #vDash #listSiswa .siswa{background:var(--field);border-radius:20px;padding:8px 10px;margin-bottom:6px;border-bottom:0}
-#listSiswa .siswa::before{content:"🐻";flex:0 0 38px;height:38px;border-radius:50%;background:var(--brand-soft);display:flex;align-items:center;justify-content:center;font-size:20px}
-#listSiswa .siswa:nth-child(4n+2)::before{content:"🐰"}
-#listSiswa .siswa:nth-child(4n+3)::before{content:"🐥"}
-#listSiswa .siswa:nth-child(4n)::before{content:"🦊"}
-#listSiswa .siswa.berfoto::before{display:none}
+#listSiswa .siswa .ini{flex:0 0 38px;width:38px;height:38px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px}
 #listSiswa .siswa .fotoM{flex:0 0 38px;width:38px;height:38px;border-radius:50%;object-fit:cover;background:var(--brand-soft);border:2px solid var(--brand-soft)}
 #fotoPreview{position:fixed;inset:0;z-index:9999;background:rgba(10,18,32,.72);display:flex;align-items:center;justify-content:center;cursor:zoom-out;animation:kUp .2s both}
 #fotoPreview img{width:min(78vw,320px);height:min(78vw,320px);object-fit:cover;border-radius:50%;border:4px solid #fff;box-shadow:0 10px 40px rgba(0,0,0,.4)}
