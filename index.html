@@ -390,7 +390,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbwn40Ejlpcyeu1ch2kZJ-5pKcsImJut16lTqcRaopUgnPyIsZBhoAljs6WsWdvS7oL6qA/exec";
 // =====================================================================
  
-var APP_VERSI = "2.3.0";
+var APP_VERSI = "1.4.0";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1152,6 +1152,34 @@ body.gelap #ingat{background:rgba(255,176,32,.14);color:#ffcf70;border-color:rgb
   #vSet:not(.hidden){max-height:none !important;overflow:visible !important}
 }
 /* v6: ubah absen + versi */
+/* v7: dashboard kepala sekolah */
+@keyframes kUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.head.kepsek::before{content:"☁️";position:absolute;right:16px;bottom:4px;font-size:34px;z-index:1}
+.kHero{background:linear-gradient(135deg,#f0ecff,#e8f3fe);border-radius:20px;padding:14px;margin-top:12px;animation:kUp .35s both}
+body.gelap .kHero{background:rgba(255,255,255,.06)}
+.kTop{display:flex;align-items:center;gap:14px;color:var(--ink)}
+.kTop svg{flex:none}.kTop b{display:block;font-size:16px;font-weight:800}
+.kTop span{font-size:13px;color:var(--ink2);font-weight:600}
+.kSt{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}
+.kSt div{background:var(--card);border-radius:14px;padding:7px 2px;text-align:center}
+.kSt i{display:block;font-style:normal;font-size:18px}
+.kSt b{display:block;font-size:16px;font-weight:800;line-height:1.2}
+.kSt small{font-size:10px;font-weight:700;color:var(--muted)}
+.kSt .s0 b{color:var(--ok)}.kSt .s1 b{color:#d98a00}.kSt .s2 b{color:#2f7df6}.kSt .s3 b{color:var(--bad)}.kSt .s4 b{color:var(--muted)}
+details.kc{padding:0;margin-top:10px;border:1.5px solid transparent;border-radius:20px;background:var(--field);overflow:hidden;animation:kUp .35s both}
+details.kc[open]{border-color:var(--cb)}
+details.kc summary{display:flex;align-items:center;gap:12px;padding:12px 14px;list-style:none;cursor:pointer}
+details.kc summary::-webkit-details-marker{display:none}
+.c0{--cc:#ffe8a3;--cb:#f6b81c}.c1{--cc:#d6ecff;--cb:#2f7df6}.c2{--cc:#ffd9e6;--cb:#e5508a}.c3{--cc:#d8f5e8;--cb:#16a679}
+.ki{flex:0 0 44px;height:44px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:23px;background:var(--cc)}
+.kn{flex:1;min-width:0}.kn b{display:block;font-size:15px;font-weight:800}
+.kn small{display:block;font-size:11.5px;color:var(--muted);font-weight:600}
+.kn em{display:block;height:6px;border-radius:9px;background:var(--line);margin-top:6px;overflow:hidden}
+.kn u{display:block;height:100%;border-radius:9px;background:var(--cb);text-decoration:none}
+.kp{font-weight:800;font-size:15px;color:var(--cb)}
+.ks{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 14px;border-top:1px solid var(--line);background:var(--card);font-size:13.5px;font-weight:600}
+.pil{font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.pil.bl{background:var(--bad-soft);color:var(--bad)}
 .ver{text-align:center;font-size:12px;line-height:1.6;color:var(--muted);font-weight:600;margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}
 #vKoreksi:not(.hidden){max-height:calc(100vh - 104px);max-height:calc(100dvh - 104px);overflow-y:auto}
 #vKoreksi .siswa select{min-width:110px}
@@ -2045,7 +2073,47 @@ if(btGuru){
 
 // ---------- versi aplikasi (paling bawah menu Pengaturan) ----------
 vs.insertAdjacentHTML("beforeend",
-  '<div class="ver">Created by Furqon S<br>Versi ' + APP_VERSI + ' (' + APP_TGL + ')</div>');
+  '<div class="ver">Presensi Online KB RA At Tibyan<br>Versi ' + APP_VERSI + ' (' + APP_TGL + ')</div>');
+
+// ---------- v7: tampilan dashboard kepala sekolah ----------
+(function(){
+  var hh = document.querySelector("#vKepsek .head h2"), sb = document.querySelector("#vKepsek .head div");
+  if(hh) hh.textContent = "🌈 Dashboard Kepala Sekolah";
+  if(sb) sb.appendChild(document.createTextNode(" 👋"));
+})();
+function ringK(p){
+  var c = 2 * Math.PI * 30;
+  return '<svg viewBox="0 0 80 80" width="84" height="84"><circle cx="40" cy="40" r="30" fill="none" stroke="var(--line)" stroke-width="9"/>' +
+    '<circle cx="40" cy="40" r="30" fill="none" stroke="var(--ok)" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + (c * p / 100) + " " + c +
+    '" transform="rotate(-90 40 40)"/><text x="40" y="45" text-anchor="middle" font-size="17" font-weight="800" fill="currentColor">' + p + '%</text></svg>';
+}
+function ikonKelas(n){
+  var k = String(n).toLowerCase().replace(/[\s\-_]/g, "");
+  return k === "kb" ? "🧸" : k === "tka" ? "🐥" : k === "tkb" ? "🦋" : "🌟";
+}
+renderRingkasan = function(){
+  var t = { Hadir:0, Izin:0, Sakit:0, Alpa:0, Belum:0 }, n = 0, box = $("kList");
+  var E = { Hadir:"😊", Izin:"📝", Sakit:"🤒", Alpa:"😢", Belum:"⏳" };
+  box.innerHTML = "";
+  K.kelas.forEach(function(k){ Object.keys(t).forEach(function(s){ t[s] += k.hitung[s]; }); n += k.siswa.length; });
+  var p = n ? Math.round(t.Hadir * 100 / n) : 0;
+  $("kTotal").className = "kHero";
+  $("kTotal").innerHTML = '<div class="kTop">' + ringK(p) + '<div><b>Kehadiran seluruh kelas</b><span>' + t.Hadir + " dari " + n + ' murid hadir</span></div></div><div class="kSt">' +
+    Object.keys(t).map(function(s, i){ return '<div class="s' + i + '"><i>' + E[s] + "</i><b>" + t[s] + "</b><small>" + s + "</small></div>"; }).join("") + "</div>";
+  K.kelas.forEach(function(k, ci){
+    var d = document.createElement("details"), h = k.hitung, np = k.siswa.length ? Math.round(h.Hadir * 100 / k.siswa.length) : 0;
+    d.className = "kc c" + (ci % 4); d.style.animationDelay = (ci * 0.06) + "s";
+    d.innerHTML = '<summary><span class="ki">' + ikonKelas(k.kelas) + '</span><span class="kn"><b>' + esc(k.kelas) + "</b><small>" + k.siswa.length + " murid · " +
+      h.Hadir + " hadir · " + h.Belum + ' belum</small><em><u style="width:' + np + '%"></u></em></span><span class="kp">' + np + "%</span></summary>";
+    k.siswa.forEach(function(x){
+      var r = document.createElement("div"); r.className = "ks";
+      r.innerHTML = "<span>" + esc(x.nama) + '</span><span class="pil ' + (x.status ? "k-" + x.status : "bl") + '">' +
+        (x.status ? esc(x.status) + (x.jam ? " · " + esc(x.jam) : "") : "Belum absen") + "</span>";
+      d.appendChild(r);
+    });
+    box.appendChild(d);
+  });
+};
 
 // sesi yang dipulihkan saat refresh
 if(!$("vDash").classList.contains("hidden")) show("vDash");
