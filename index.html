@@ -390,7 +390,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "3.5.6";
+var APP_VERSI = "3.5.7";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1448,7 +1448,8 @@ button.purple:hover{background:var(--brand-dark)}
 #vKepsek .kp{font-size:14px}
 #vKepsek .ks{padding:7px 12px;font-size:13px}
 @media (max-width:899px){
-  body.app #vKepsek:not(.hidden){display:flex !important;flex-direction:column;height:calc(100vh - 104px);height:calc(100dvh - 104px);max-height:none !important}
+  body.app:has(#vKepsek:not(.hidden)){padding-bottom:calc(var(--navh,76px) + 8px)}
+  body.app #vKepsek:not(.hidden){display:flex !important;flex-direction:column;height:calc(100vh - var(--navh,76px) - 20px);height:calc(100dvh - var(--navh,76px) - 20px);max-height:none !important}
   body.app #vKepsek .card{display:flex !important;flex-direction:column;flex:1 1 auto !important;min-height:0 !important;margin-bottom:0;padding:12px 14px}
   body.app #vKepsek #kList{flex:1 1 auto;min-height:60px;max-height:none !important;overflow-y:auto !important}
   body.app #vKepsek .head{flex:none}
@@ -1784,6 +1785,8 @@ function go(k){
   else if(k === "set"){ isiSet(); show("vSet"); }
 }
 nav.addEventListener("click", function(e){ var b = e.target.closest("[data-go]"); if(b) go(b.getAttribute("data-go")); });
+function ukurNav(){ var h = nav.offsetHeight; if(h) document.documentElement.style.setProperty("--navh", h + "px"); }
+window.addEventListener("resize", ukurNav);
 var KPETA = { vKepsek:"kb", vKRekap:"kr", vRiwayat:"kl", vKSet:"ks" };
 var _show = show;
 show = function(id){
@@ -1795,6 +1798,7 @@ show = function(id){
   if(id === "vDash" || id === "vKepsek") pasangFotoHead();
   if(ap){
     $("nvNama").textContent = rl === "kepsek" ? (K.nama || "") + " · Kepala Sekolah" : (S.nama || "") + (S.kelas ? " · " + S.kelas : "");
+    ukurNav(); setTimeout(ukurNav, 300);
     var aktif = rl === "kepsek" ? KPETA[id] : PETA[id];
     Array.prototype.forEach.call(nav.querySelectorAll(".nb"), function(b){ b.classList.toggle("on", b.getAttribute("data-go") === aktif); });
   }
