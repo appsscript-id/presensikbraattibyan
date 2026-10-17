@@ -390,7 +390,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "3.6.0";
+var APP_VERSI = "3.6.1";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1485,6 +1485,21 @@ body.app #vKepsek #kList{flex:0 1 auto}
   body.app #vKepsek .kp{font-size:clamp(14px,2.1dvh,19px)}
   body.app #vKepsek .ks{padding:clamp(7px,1.2dvh,12px) 12px;font-size:clamp(13px,1.8dvh,15px)}
 }
+</style>
+<style>
+/* ===== v13: wali murid - status hari ini + menu libur ===== */
+.wHari{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;margin:0 0 10px;background:var(--field);color:var(--ink2)}
+.wHari .we{font-size:28px;line-height:1}
+.wHari b{display:block;font-size:16px;font-weight:800;line-height:1.25}
+.wHari small{display:block;font-size:12.5px;font-weight:600;opacity:.92;margin-top:1px}
+.wHari.lb{background:rgba(229,72,77,.12);color:var(--bad)}
+#vWLibur:not(.hidden){max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto}
+#vWLibur h4{margin:14px 0 6px;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+#vWLibur .siswa{background:var(--field);border-radius:16px;padding:10px 12px;margin-bottom:6px;border-bottom:0}
+#vWLibur .siswa.kini{background:var(--accent-soft)}
+#vWLibur small{display:block;color:var(--muted);font-weight:600;font-size:12px}
+#vWLibur .tgl{font-weight:700;font-size:13.5px;text-align:right}
+@media (max-width:899px){#vWLibur:not(.hidden){max-height:none;overflow:visible}}
 </style>
 <script>
 function mulaiUI(){
@@ -2693,6 +2708,77 @@ function konfirmasi(teks, labelOk, fn){
       });
     }, logout);
   };
+})();
+
+// ---------- v13: wali murid - status hari ini di halaman depan + menu Hari Libur ----------
+(function(){
+  var ban = document.createElement("div"); ban.id = "wHariIni"; ban.className = "wHari"; ban.style.display = "none";
+  $("wBulan").parentNode.insertBefore(ban, $("wBulan"));
+
+  function bannerHariIni(r){
+    var n = wibSekarang(), t = n.tgl;
+    if(r.bulan !== t.substring(0, 7)){ ban.style.display = "none"; return; }
+    var x = null; r.list.forEach(function(i){ if(i.key === t) x = i; });
+    var lib = LIBURMAP[t] || ((n.hari === 0 || n.hari === 6) ? "Akhir pekan" : "");
+    var E = { Hadir:"😊", Izin:"📝", Sakit:"🤒", Alpa:"😢" }, em, judul, sub;
+    if(x){
+      em = E[x.status] || "✅"; judul = "Hari ini: " + x.status;
+      sub = x.jam && x.jam !== "-" ? "Tercatat pukul " + x.jam : "Sudah tercatat";
+      ban.className = "wHari k-" + x.status;
+    } else if(lib){
+      em = "🎈"; judul = "Hari ini libur"; sub = lib; ban.className = "wHari lb";
+    } else {
+      em = "⏳"; judul = "Belum tercatat hari ini"; sub = "Guru belum mencatat kehadiran " + r.nama; ban.className = "wHari";
+    }
+    ban.innerHTML = '<span class="we">' + em + '</span><span><b>' + esc(judul) + '</b><small>' + esc(sub) + '</small></span>';
+    ban.style.display = "flex";
+  }
+
+  muatRekapWali = function(){
+    ambil("getRekapWali", { token:W.token, bulan:$("wBulan").value }, $("wrMsg"), function(r){
+      tampilRekap(r, $("wrRingkas"), $("wrList"));
+      muatLibur().catch(function(){}).then(function(){ bannerHariIni(r); });
+    }, keluarWali);
+  };
+
+  // menu Hari Libur untuk wali
+  var v = document.createElement("div"); v.id = "vWLibur"; v.className = "card hidden";
+  v.innerHTML = '<h3>📅 Hari Libur Sekolah</h3><div id="wlInfo" class="b"></div><div id="wlList"></div><div id="wlMsg" class="msg"></div>' +
+    '<button type="button" class="gray" id="wlKembali">Kembali</button>';
+  $("vWaliHasil").parentNode.insertBefore(v, $("vWaliHasil").nextSibling);
+  VIEWS.push("vWLibur");
+
+  function gambarWLibur(){
+    var box = $("wlList"), today = wibSekarang().tgl, info = $("wlInfo");
+    box.innerHTML = "";
+    var depan = (LIBUR || []).filter(function(x){ return x.selesai >= today; });
+    if(!depan.length) info.textContent = "Belum ada libur terjadwal ke depan.";
+    else {
+      var f = depan[0];
+      if(f.mulai <= today) info.textContent = "Hari ini libur: " + f.ket;
+      else info.textContent = "Libur berikutnya: " + f.ket + " (" + tglIndo(f.mulai) + "), " +
+        Math.round((utcDari(f.mulai) - utcDari(today)) / 86400000) + " hari lagi";
+    }
+    var bl = "";
+    depan.forEach(function(x){
+      var b = BULAN[Number(x.mulai.substring(5, 7)) - 1] + " " + x.mulai.substring(0, 4);
+      if(b !== bl){ bl = b; var hh = document.createElement("h4"); hh.textContent = b; box.appendChild(hh); }
+      baris(box, x.ket, x.selesai !== x.mulai ? tglIndo(x.mulai) + " – " + tglIndo(x.selesai) : tglIndo(x.mulai));
+      var row = box.lastChild, sm = document.createElement("small");
+      if(x.mulai <= today && x.selesai >= today) row.className += " kini";
+      sm.textContent = x.jenis; row.firstChild.appendChild(sm); row.lastChild.className = "tgl";
+    });
+  }
+  function bukaWLibur(){
+    show("vWLibur");
+    if(LIBUR) gambarWLibur(); else say($("wlMsg"), "Memuat...", "info");
+    muatLibur().then(function(){ gambarWLibur(); say($("wlMsg"), ""); }).catch(function(e){ say($("wlMsg"), galat(e), "err"); });
+  }
+  var bt = document.createElement("button"); bt.type = "button"; bt.className = "gray"; bt.textContent = "📅 Hari Libur Sekolah";
+  var ref = document.querySelector('#vWaliHasil button[onclick="muatRekapWali()"]');
+  ref.parentNode.insertBefore(bt, ref.nextSibling);
+  bt.onclick = bukaWLibur;
+  $("wlKembali").onclick = function(){ show("vWaliHasil"); };
 })();
 
 // sesi yang dipulihkan saat refresh
