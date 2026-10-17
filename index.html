@@ -265,6 +265,8 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
   <button class="role guru" onclick="pilih('vLogin')"><span class="ic">👩‍🏫</span><span class="tx"><b>Guru</b><small>Absensi &amp; scan wajah murid</small></span><span class="ar">›</span></button>
   <button class="role kepsek" onclick="pilih('vKLogin')"><span class="ic">🧕</span><span class="tx"><b>Kepala Sekolah</b><small>Ringkasan seluruh kelas</small></span><span class="ar">›</span></button>
   <button class="role wali" onclick="pilih('vWali')"><span class="ic">👨‍👩‍👧</span><span class="tx"><b>Wali Murid</b><small>Lihat kehadiran anak</small></span><span class="ar">›</span></button>
+  <button type="button" class="gray" id="pasangDepan" style="margin-top:14px">📲 Pasang Aplikasi di HP</button>
+  <div id="pasangInfoDepan" class="msg"></div>
   <div id="srvStatus" class="msg"></div>
 </div>
  
@@ -1633,13 +1635,17 @@ $("vDash").parentNode.insertBefore(vs, $("vDash"));
 
 // ---------- tombol Pasang Aplikasi (PWA) ----------
 function isiPasang(){
-  var b = $("setPasang"); if(!b || !window.PWA) return;
-  var sudah = PWA.terpasang();
-  b.textContent = sudah ? "✅ Aplikasi sudah terpasang" : "📲 Pasang Aplikasi";
-  b.disabled = sudah;
+  if(!window.PWA) return;
+  var sudah = PWA.terpasang(), b = $("setPasang"), d = $("pasangDepan");
+  if(b){ b.textContent = sudah ? "✅ Aplikasi sudah terpasang" : "📲 Pasang Aplikasi"; b.disabled = sudah; }
+  if(d){ d.style.display = sudah ? "none" : ""; if(sudah) say($("pasangInfoDepan"), ""); }   // halaman depan: sembunyi bila sudah terpasang
 }
-function pasangApp(){
-  var info = $("pasangInfo");
+// tombol di halaman depan (untuk wali murid, kepala sekolah, dan guru) + hilang otomatis setelah terpasang
+$("pasangDepan").onclick = function(){ pasangApp("pasangInfoDepan"); };
+window.addEventListener("appinstalled", isiPasang);
+isiPasang();
+function pasangApp(idInfo){
+  var info = $(idInfo || "pasangInfo");
   if(!window.PWA){ say(info, "Fitur pasang tidak tersedia di browser ini.", "err"); return; }
   PWA.pasang().then(function(h){
     if(h === "ok") say(info, "Aplikasi dipasang. Cari ikon Presensi di layar utama HP.", "ok");
