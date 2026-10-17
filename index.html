@@ -390,7 +390,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "3.5.5";
+var APP_VERSI = "3.5.6";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1417,6 +1417,41 @@ body.gelap #lbInfo{background:rgba(255,176,32,.14);color:#ffcf70}
   body.app #vKSet,body.app #vRiwayat{max-width:620px;width:100%;margin-left:auto;margin-right:auto}
   body.app #vKSet:not(.hidden),body.app #vRiwayat:not(.hidden){max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);overflow-y:auto}
   body.app #vKepsek:not(.hidden),body.app #vKRekap:not(.hidden){max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px)}
+}
+</style>
+<style>
+/* ===== v11: dashboard kepala sekolah muat satu layar + warna ikut tema ===== */
+body .head.kepsek{background:linear-gradient(135deg,var(--g1),var(--g2));box-shadow:0 1px 3px rgba(15,27,45,.08)}
+button.purple,button.purple:hover{box-shadow:none}
+button.purple{background:var(--brand)}
+button.purple:hover{background:var(--brand-dark)}
+.kHero{background:linear-gradient(135deg,var(--brand-soft),var(--field))}
+#vKepsek .kHero{padding:10px 12px;margin-top:8px}
+#vKepsek .kTop{gap:12px}
+#vKepsek .kTop svg{width:60px;height:60px}
+#vKepsek .kTop b{font-size:14.5px;line-height:1.25}
+#vKepsek .kTop span{font-size:12.5px}
+#vKepsek .kSt{margin-top:8px;gap:5px}
+#vKepsek .kSt div{padding:4px 2px;border-radius:12px}
+#vKepsek .kSt i{font-size:15px}
+#vKepsek .kSt b{font-size:14px;line-height:1.2}
+#vKepsek .kSt small{font-size:9.5px}
+#vKepsek input[type=date]{padding:9px 14px;margin-bottom:0}
+#vKepsek .bar{margin-top:8px}
+#vKepsek .bar button{padding:9px 8px}
+#vKepsek details.kc{margin-top:8px}
+#vKepsek details.kc summary{padding:8px 12px;gap:10px}
+#vKepsek .ki{flex:0 0 36px;height:36px;font-size:19px;border-radius:12px}
+#vKepsek .kn b{font-size:14px}
+#vKepsek .kn small{font-size:11px}
+#vKepsek .kn em{margin-top:4px;height:5px}
+#vKepsek .kp{font-size:14px}
+#vKepsek .ks{padding:7px 12px;font-size:13px}
+@media (max-width:899px){
+  body.app #vKepsek:not(.hidden){display:flex !important;flex-direction:column;height:calc(100vh - 104px);height:calc(100dvh - 104px);max-height:none !important}
+  body.app #vKepsek .card{display:flex !important;flex-direction:column;flex:1 1 auto !important;min-height:0 !important;margin-bottom:0;padding:12px 14px}
+  body.app #vKepsek #kList{flex:1 1 auto;min-height:60px;max-height:none !important;overflow-y:auto !important}
+  body.app #vKepsek .head{flex:none}
 }
 </style>
 <script>
