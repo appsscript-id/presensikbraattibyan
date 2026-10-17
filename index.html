@@ -390,7 +390,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbwn40Ejlpcyeu1ch2kZJ-5pKcsImJut16lTqcRaopUgnPyIsZBhoAljs6WsWdvS7oL6qA/exec";
 // =====================================================================
  
-var APP_VERSI = "1.2.1";
+var APP_VERSI = "1.3.0";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1757,7 +1757,7 @@ function buatPdf(o){
     doc.text("Mengetahui,", 45, y, { align:"center" });
     doc.text("Kepala Sekolah", 45, y + 4.5, { align:"center" });
     doc.text("Guru Kelas", W - 45, y + 4.5, { align:"center" });
-    doc.text("(" + (K.token && K.nama ? K.nama : ".....................") + ")", 45, y + 26, { align:"center" });
+    doc.text("(" + (o.kepsek || (K.token && K.nama ? K.nama : ".....................")) + ")", 45, y + 26, { align:"center" });
     doc.text("(" + (S.token && S.nama ? S.nama : ".....................") + ")", W - 45, y + 26, { align:"center" });
     doc.save(o.file);
   });
@@ -1775,7 +1775,7 @@ function pdfBulan(r){
     row.push(String(c.Hadir), String(c.Izin), String(c.Sakit), String(c.Alpa), pr >= 0 ? pr + "%" : "-");
     return row;
   });
-  return buatPdf({
+  return buatPdf({ kepsek:r.kepsek,
     judul:"Rekap Absensi Kelas " + r.kelas, sub:namaBulan(r.bulan) + " - " + r.siswa.length + " murid",
     head:[hd], body:body, fs:6.5, pad:0.8, cs:cs, file:"Absensi " + r.kelas + " " + r.bulan + ".pdf",
     ket:"H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu.",
@@ -1846,7 +1846,7 @@ function pdfPeriode(r){
     row.push(String(c.Hadir), String(c.Izin), String(c.Sakit), String(c.Alpa), pr >= 0 ? pr + "%" : "-");
     return row;
   });
-  return buatPdf({
+  return buatPdf({ kepsek:r.kepsek,
     judul:"Rekap Absensi Kelas " + r.kelas, sub:labelPeriode(r) + " - " + r.siswa.length + " murid",
     head:[hd], body:body, fs:n > 6 ? 6.5 : 7.5, pad:1, cs:cs, file:"Absensi " + r.kelas + " " + fileLabel(r) + ".pdf",
     ket:"Isi kolom bulan = Hadir/Izin/Sakit/Alpa. H = total Hadir, I = Izin, S = Sakit, A = Alpa, % = persentase hadir. Nama merah = kehadiran di bawah 75%.",
@@ -2025,13 +2025,14 @@ $("kkSimpan").onclick = function(){
   if(!rec.length){ say($("kkMsg"), "Belum ada perubahan.", "err"); return; }
   var hapus = rec.filter(function(x){ return !x.status; }).length;
   if(hapus && !confirm(hapus + " catatan absen akan dihapus. Lanjutkan?")) return;
-  say($("kkMsg"), "Menyimpan...", "info"); $("kkSimpan").disabled = true;
+  unlockSuara(); say($("kkMsg"), "Menyimpan...", "info"); $("kkSimpan").disabled = true;
   api("simpanAbsenTanggal", { token:S.token, tanggal:t, records:rec }).then(function(r){
     $("kkSimpan").disabled = false;
     if(sesiHabis(r)){ logout(r.message); return; }
     if(r.status !== "success"){ say($("kkMsg"), r.message, "err"); return; }
     KK.forEach(function(x){ x.awal = x.nilai; });
     say($("kkMsg"), r.message, "ok");
+    bicara("Perubahan berhasil disimpan.");
     if(t === wibSekarang().tgl) muatSiswa();
   }).catch(function(e){ $("kkSimpan").disabled = false; say($("kkMsg"), galat(e), "err"); });
 };
