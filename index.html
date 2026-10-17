@@ -390,7 +390,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbwn40Ejlpcyeu1ch2kZJ-5pKcsImJut16lTqcRaopUgnPyIsZBhoAljs6WsWdvS7oL6qA/exec";
 // =====================================================================
  
-var APP_VERSI = "1.1.0";
+var APP_VERSI = "1.2.0";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1155,7 +1155,7 @@ body.gelap #ingat{background:rgba(255,176,32,.14);color:#ffcf70;border-color:rgb
 .ver{text-align:center;font-size:12px;line-height:1.6;color:var(--muted);font-weight:600;margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}
 #vKoreksi:not(.hidden){max-height:calc(100vh - 104px);max-height:calc(100dvh - 104px);overflow-y:auto}
 #vKoreksi .siswa select{min-width:110px}
-#perBar select{flex:1;min-width:0}
+.perBar{display:flex;gap:8px}.perBar select{flex:1 1 0;width:50%;min-width:0;margin:0;padding:12px 10px;font-size:13.5px;border-radius:14px;text-overflow:ellipsis}
 @media (min-width:900px){
   #vKoreksi:not(.hidden){max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px)}
   body.app #vKoreksi{max-width:620px;width:100%;margin-left:auto;margin-right:auto}
@@ -1916,6 +1916,57 @@ bangunPeriode('#vKRekap button[onclick="muatKRekap()"]', function(){
   return { kelas:k.kelas };
 }, "krMsg", "krRingkas", "krList", function(){ return K.token; });
 
+// ---------- Excel / cetak ukuran A4 ----------
+var KET_BLN = "H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu (libur).";
+var KET_PRD = "Isi kolom bulan = Hadir/Izin/Sakit/Alpa. H = total Hadir, I = Izin, S = Sakit, A = Alpa, % = persentase hadir. Nama merah = kehadiran di bawah 75%.";
+var CSS_TB = 'body{font-family:Arial,sans-serif;font-size:11px}h3{margin:0 0 4px}p{margin:4px 0;color:#555}' +
+  'table{border-collapse:collapse}th,td{border:1px solid #999;padding:2px 3px;text-align:center}' +
+  'td:first-child,th:first-child{text-align:left;white-space:nowrap}th{background:#eee}' +
+  '.wk{background:#f3d9da}th.wk{color:#b3262b}.k-Hadir{background:#16a679;color:#fff}.k-Izin{background:#f5a524;color:#3d2a00}.k-Sakit{background:#2f7df6;color:#fff}.k-Alpa{background:#e5484d;color:#fff}' +
+  '.rendah td:first-child,.rendah .pr{color:#b3262b;font-weight:700}.sum{font-weight:700}';
+function xlsSimpan(nama, judul, sub, tabel, ket){
+  var h = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">' +
+    '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Rekap</x:Name><x:WorksheetOptions><x:FitToPage/>' +
+    '<x:Print><x:FitWidth>1</x:FitWidth><x:FitHeight>0</x:FitHeight><x:ValidPrinterInfo/><x:PaperSizeIndex>9</x:PaperSizeIndex></x:Print>' +
+    '</x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->' +
+    '<style>@page{size:A4 landscape;mso-page-orientation:landscape;margin:.4in}' + CSS_TB + '</style></head><body>' +
+    '<h3>KB RA At Tibyan - ' + esc(judul) + '</h3><p>' + esc(sub) + '</p>' + tabel + '<p>' + esc(ket) + '</p></body></html>';
+  var a = document.createElement("a"), url = URL.createObjectURL(new Blob(["\ufeff" + h], { type:"application/vnd.ms-excel;charset=utf-8" }));
+  a.href = url; a.download = nama;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+function cetakA4(judul, sub, tabel, ket){
+  var w = window.open("", "_blank");
+  if(!w){ alert("Pop-up diblokir. Izinkan pop-up untuk situs ini lalu coba lagi."); return; }
+  w.document.write('<html><head><title>' + esc(judul) + '</title><style>@page{size:A4 landscape;margin:10mm}' +
+    '*{-webkit-print-color-adjust:exact;print-color-adjust:exact}table{width:100%}' + CSS_TB + '</style></head><body>' +
+    '<h3>KB RA At Tibyan - ' + esc(judul) + '</h3><p>' + esc(sub) + '</p>' + tabel + '<p>' + esc(ket) + '</p></body></html>');
+  w.document.close(); w.focus(); setTimeout(function(){ w.print(); }, 300);
+}
+unduhCSV = function(r){
+  xlsSimpan("Absensi " + r.kelas + " " + r.bulan + ".xls", "Rekap Absensi Kelas " + r.kelas,
+    namaBulan(r.bulan) + " - " + r.siswa.length + " murid", htmlTabel(r), KET_BLN);
+};
+csvPeriode = function(r){
+  xlsSimpan("Absensi " + r.kelas + " " + fileLabel(r) + ".xls", "Rekap Absensi Kelas " + r.kelas,
+    labelPeriode(r) + " - " + r.siswa.length + " murid", htmlPeriode(r), KET_PRD);
+};
+cetakTabel = function(r){
+  cetakA4("Rekap Absensi Kelas " + r.kelas + " - " + namaBulan(r.bulan), r.siswa.length + " murid", htmlTabel(r), KET_BLN);
+};
+renderPeriode = function(box, r){
+  box.innerHTML = "";
+  var bar = document.createElement("div"); bar.className = "tbbar";
+  tbBtn(bar, "⬇️ Excel", function(){ csvPeriode(r); });
+  tbBtn(bar, "📄 PDF", function(){ return pdfPeriode(r); });
+  tbBtn(bar, "🖨️ Cetak", function(){
+    cetakA4("Rekap Absensi Kelas " + r.kelas + " - " + labelPeriode(r), r.siswa.length + " murid", htmlPeriode(r), KET_PRD);
+  });
+  box.appendChild(bar);
+  var w = document.createElement("div"); w.className = "tbw"; w.innerHTML = htmlPeriode(r); box.appendChild(w);
+  catatanTabel(box, "Isi kolom bulan = Hadir/Izin/Sakit/Alpa. Nama merah = kehadiran di bawah 75%.");
+};
+
 // ---------- UBAH ABSEN HARI LALU (guru) ----------
 var KK = [];
 var vk = document.createElement("div"); vk.id = "vKoreksi"; vk.className = "card hidden";
@@ -1983,7 +2034,9 @@ $("kkSimpan").onclick = function(){
 };
 if(btGuru){
   var kb = document.createElement("button"); kb.type = "button"; kb.className = "gray"; kb.textContent = "✏️ Ubah Absen Hari Lalu";
-  kb.onclick = bukaKoreksi; btGuru.parentNode.insertBefore(kb, btGuru.nextSibling);
+  kb.onclick = bukaKoreksi;
+  var tbKelas = btGuru.parentNode.querySelector('button[onclick="muatRekap()"]').nextElementSibling;
+  tbKelas.parentNode.insertBefore(kb, tbKelas.nextSibling);
 }
 
 // ---------- versi aplikasi (paling bawah menu Pengaturan) ----------
