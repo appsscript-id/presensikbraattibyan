@@ -389,7 +389,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "3.7.1";
+var APP_VERSI = "3.8.0";
 var APP_TGL = "17 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -1513,6 +1513,36 @@ body.app #vKepsek #kList{flex:0 1 auto}
 #vWLibur small{display:block;color:var(--muted);font-weight:600;font-size:12px}
 #vWLibur .tgl{font-weight:700;font-size:13.5px;text-align:right}
 @media (max-width:899px){#vWLibur:not(.hidden){max-height:none;overflow:visible}}
+/* ===== v15: izin / sakit dari wali + persetujuan guru ===== */
+#nav .nb{position:relative}
+#nav .nb .izBd{position:absolute;top:0;right:calc(50% - 24px);min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--bad);color:#fff;font-size:10px;font-weight:800;line-height:17px;font-style:normal;font-family:inherit;text-align:center}
+@media (min-width:900px){#nav .nb .izBd{top:50%;right:12px;transform:translateY(-50%)}}
+.izl{display:block;margin:12px 0 6px;font-size:13px;font-weight:700;color:var(--ink2)}
+#vWIzin textarea{width:100%;padding:14px 16px;margin-bottom:6px;border:1.5px solid transparent;border-radius:var(--r-sm);font-size:15px;font-weight:500;background:var(--field);color:var(--ink);font-family:inherit;resize:vertical;min-height:84px;transition:.18s}
+#vWIzin textarea:focus{outline:none;border-color:var(--brand);background:var(--card);box-shadow:0 0 0 4px rgba(47,125,246,.14)}
+#vWIzin textarea::placeholder{color:var(--muted);font-weight:500}
+#vWIzin h4,#vIzinG h4{margin:18px 0 8px;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+#vWIzin .row{display:flex;gap:10px;align-items:center}
+#vWIzin .seg{flex:1;margin:0;background:var(--field);color:var(--ink2);box-shadow:none}
+#vWIzin .seg.on{background:var(--brand);color:#fff}
+.izItem{background:var(--field);border-radius:16px;padding:12px 14px;margin-bottom:8px}
+.izItem .it{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.izItem .it b{font-size:14.5px;font-weight:800}
+.izItem .ia{font-size:13.5px;color:var(--ink2);font-weight:500;margin-top:4px;word-break:break-word}
+.izItem small{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:4px}
+.izItem small.warn{color:var(--bad)}
+.izItem .bar{margin-top:10px}
+.izItem button.gray{width:auto;margin-top:8px;padding:9px 14px;font-size:13px;background:var(--card)}
+.izS,.izJ{flex:none;font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:999px}
+.izJ{background:var(--brand-soft);color:var(--brand)}
+.izM{background:var(--accent-soft);color:#b36b00}
+.izOk{background:var(--ok-soft);color:var(--ok)}
+.izTol{background:var(--bad-soft);color:var(--bad)}
+.izBat{background:var(--line);color:var(--muted)}
+.izKosong{font-size:13.5px;color:var(--muted);font-weight:600;padding:6px 2px}
+#vWIzin:not(.hidden),#vIzinG:not(.hidden){max-height:calc(100vh - 104px);max-height:calc(100dvh - 104px);overflow-y:auto}
+@media (max-width:899px){#vWIzin:not(.hidden),#vIzinG:not(.hidden){max-height:none;overflow:visible}}
+@media (min-width:900px){body.app #vWIzin,body.app #vIzinG{max-width:620px;width:100%;margin-left:auto;margin-right:auto}}
 </style>
 <script>
 function mulaiUI(){
@@ -1819,7 +1849,7 @@ tombolTabel('#vKRekap button[onclick="muatKRekap()"]', muatTabelKepsek);
 VIEWS.push("vSet");
 var nav = document.createElement("nav"); nav.id = "nav";
 var NAVGURU = '<div class="nh"><img src="logo.png" alt="" onerror="this.style.display=\'none\'"><div><b>KB RA At Tibyan</b><small id="nvNama"></small></div></div>' +
-  [["abs","🏠","Absensi"],["rek","📊","Rekap"],["lib","📅","Libur"],["set","⚙️","Pengaturan"],["out","🚪","Keluar"]].map(function(i){
+  [["abs","🏠","Absensi"],["izn","📝","Izin"],["rek","📊","Rekap"],["lib","📅","Libur"],["set","⚙️","Pengaturan"],["out","🚪","Keluar"]].map(function(i){
     return '<button type="button" class="nb' + (i[0] === "out" ? " out" : "") + '" data-go="' + i[0] + '"><span>' + i[1] + '</span>' + i[2] + '</button>'; }).join("");
 var NAVKEPSEK = '<div class="nh"><img src="logo.png" alt="" onerror="this.style.display=\'none\'"><div><b>KB RA At Tibyan</b><small id="nvNama"></small></div></div>' +
   [["kb","🏠","Ringkasan"],["kr","📊","Rekap Siswa"],["kl","🕒","Riwayat Login"],["ks","⚙️","Pengaturan"],["out","🚪","Keluar"]].map(function(i){
@@ -1849,7 +1879,7 @@ window.addEventListener("resize", ukurNav);
 var KPETA = { vKepsek:"kb", vKRekap:"kr", vRiwayat:"kl", vKSet:"ks" };
 var WPETA = { vWaliHasil:"wa", vWLibur:"wl", vWSet:"ws" };
 var NAVWALI = '<div class="nh"><img src="logo.png" alt="" onerror="this.style.display=\'none\'"><div><b>KB RA At Tibyan</b><small id="nvNama"></small></div></div>' +
-  [["wa","🏠","Absensi"],["wl","📅","Libur"],["ws","⚙️","Pengaturan"],["out","🚪","Keluar"]].map(function(i){
+  [["wa","🏠","Absensi"],["iz","📝","Izin"],["wl","📅","Libur"],["ws","⚙️","Pengaturan"],["out","🚪","Keluar"]].map(function(i){
     return '<button type="button" class="nb' + (i[0] === "out" ? " out" : "") + '" data-go="' + i[0] + '"><span>' + i[1] + '</span>' + i[2] + '</button>'; }).join("");
 var _show = show;
 show = function(id){
@@ -2847,6 +2877,181 @@ function konfirmasi(teks, labelOk, fn){
     else if(k === "wa") show("vWaliHasil");
     else if(k === "wl") bukaWLibur();
     else if(k === "ws"){ isiWSet(); show("vWSet"); }
+  };
+})();
+
+// ---------- v15: izin / sakit dari wali murid + persetujuan guru (menu "Izin" setelah Absensi) ----------
+(function(){
+  var JENIS_IZ = "", WIZ = [], IZN = 0, tBadge = 0, tokBadge = "";
+  var EJ = { Izin:"📝", Sakit:"🤒" };
+  function el(tag, cls, teks){ var e = document.createElement(tag); if(cls) e.className = cls; if(teks !== undefined) e.textContent = teks; return e; }
+  function tglPanjang(k){ return tglIndo(k) + " " + k.substring(0, 4); }
+  function lencana(st){
+    var c = st === "Menunggu" ? "izM" : st === "Disetujui" ? "izOk" : st === "Ditolak" ? "izTol" : "izBat";
+    return el("span", "izS " + c, st);
+  }
+
+  // ===== tampilan wali murid =====
+  var vw = el("div", "card hidden"); vw.id = "vWIzin";
+  vw.innerHTML = '<h3>📝 Ajukan Izin / Sakit</h3>' +
+    '<div class="b">Pilih tanggal, pilih Izin atau Sakit, lalu tulis alasan singkat. Setelah disetujui guru, kehadiran anak otomatis tercatat di absen.</div>' +
+    '<label class="izl" for="izTgl">Tanggal</label><input type="date" id="izTgl">' +
+    '<div class="izl">Jenis</div><div class="row"><button type="button" class="seg" data-j="Izin">📝 Izin</button><button type="button" class="seg" data-j="Sakit">🤒 Sakit</button></div>' +
+    '<label class="izl" for="izAlasan">Alasan singkat</label><textarea id="izAlasan" maxlength="200" rows="3" placeholder="Contoh: demam sejak semalam"></textarea>' +
+    '<button type="button" id="izKirim">📨 Kirim Pengajuan</button><div id="izMsg" class="msg"></div>' +
+    '<h4>Riwayat pengajuan</h4><div id="izList"></div><div id="izMsg2" class="msg"></div>';
+  $("vWaliHasil").parentNode.insertBefore(vw, $("vWaliHasil").nextSibling);
+  VIEWS.push("vWIzin"); WPETA.vWIzin = "iz";
+
+  function tandaiJenis(){
+    Array.prototype.forEach.call(vw.querySelectorAll(".seg"), function(b){ b.classList.toggle("on", b.getAttribute("data-j") === JENIS_IZ); });
+  }
+  vw.addEventListener("click", function(e){
+    var b = e.target.closest("button[data-j]"); if(!b) return;
+    JENIS_IZ = b.getAttribute("data-j"); tandaiJenis();
+  });
+
+  $("izKirim").onclick = function(){
+    var m = $("izMsg"), f = $("izTgl"), t = f.value, a = $("izAlasan").value.replace(/\s+/g, " ").trim();
+    if(!t){ say(m, "Pilih tanggalnya dulu.", "err"); return; }
+    if((f.min && t < f.min) || (f.max && t > f.max)){ say(m, "Tanggal di luar batas. Pilih 3 hari terakhir sampai 30 hari ke depan.", "err"); return; }
+    var hr = utcDari(t).getUTCDay();
+    if(hr === 0 || hr === 6){ say(m, "Sabtu dan Minggu bukan hari sekolah.", "err"); return; }
+    if(LIBURMAP && LIBURMAP[t]){ say(m, "Tanggal itu libur sekolah (" + LIBURMAP[t] + ").", "err"); return; }
+    if(!JENIS_IZ){ say(m, "Pilih Izin atau Sakit.", "err"); return; }
+    if(a.length < 3){ say(m, "Tulis alasan singkat (minimal 3 huruf).", "err"); return; }
+    var bt = $("izKirim"); bt.disabled = true; say(m, "Mengirim...", "info");
+    api("ajukanIzinWali", { token:W.token, tanggal:t, jenis:JENIS_IZ, alasan:a }).then(function(r){
+      bt.disabled = false;
+      if(sesiHabis(r)){ keluarWali(r.message); return; }
+      if(!r || r.status !== "success"){ say(m, (r && r.message) || "Gagal mengirim pengajuan.", "err"); return; }
+      $("izAlasan").value = ""; say(m, r.message, "ok"); muatWIzin();
+    }).catch(function(e){ bt.disabled = false; say(m, galat(e), "err"); });
+  };
+
+  function muatWIzin(){
+    ambil("getIzinWali", { token:W.token }, $("izMsg2"), function(r){ WIZ = r.list || []; gambarWIzin(); }, keluarWali);
+  }
+  function gambarWIzin(){
+    var box = $("izList"); box.innerHTML = "";
+    if(!WIZ.length){ box.appendChild(el("div", "izKosong", "Belum ada pengajuan.")); return; }
+    WIZ.forEach(function(x){
+      var it = el("div", "izItem"), top = el("div", "it");
+      top.appendChild(el("b", "", tglPanjang(x.tanggal))); top.appendChild(lencana(x.status));
+      it.appendChild(top);
+      it.appendChild(el("div", "ia", (EJ[x.jenis] || "") + " " + x.jenis + " · " + x.alasan));
+      if((x.status === "Disetujui" || x.status === "Ditolak") && x.oleh) it.appendChild(el("small", "", x.status + " oleh " + x.oleh));
+      else it.appendChild(el("small", "", "Diajukan " + x.diajukan));
+      if(x.status === "Menunggu"){
+        var bt = el("button", "gray", "Batalkan pengajuan"); bt.type = "button";
+        bt.onclick = function(){
+          konfirmasi("Batalkan pengajuan " + x.jenis.toLowerCase() + " tanggal " + tglPanjang(x.tanggal) + "?", "Batalkan", function(){ batal(x); });
+        };
+        it.appendChild(bt);
+      }
+      box.appendChild(it);
+    });
+  }
+  function batal(x){
+    say($("izMsg2"), "Membatalkan...", "info");
+    api("batalIzinWali", { token:W.token, id:x.id }).then(function(r){
+      if(sesiHabis(r)){ keluarWali(r.message); return; }
+      if(!r || r.status !== "success"){ say($("izMsg2"), (r && r.message) || "Gagal membatalkan.", "err"); return; }
+      muatWIzin();
+    }).catch(function(e){ say($("izMsg2"), galat(e), "err"); });
+  }
+  function bukaWIzin(){
+    var n = wibSekarang().tgl, d = utcDari(n), a = new Date(d), b = new Date(d), f = $("izTgl");
+    a.setUTCDate(a.getUTCDate() - 3); b.setUTCDate(b.getUTCDate() + 30);
+    f.min = kunciDari(a); f.max = kunciDari(b); if(!f.value) f.value = n;
+    say($("izMsg"), ""); tandaiJenis(); show("vWIzin");
+    muatLibur().catch(function(){});
+    muatWIzin();
+  }
+
+  // ===== tampilan guru =====
+  var vg = el("div", "card hidden"); vg.id = "vIzinG";
+  vg.innerHTML = '<h3>📝 Izin &amp; Sakit Murid</h3><div id="igInfo" class="b"></div>' +
+    '<h4>Menunggu persetujuan</h4><div id="igWait"></div>' +
+    '<h4>Riwayat terbaru</h4><div id="igDone"></div><div id="igMsg" class="msg"></div>';
+  $("vDash").parentNode.insertBefore(vg, $("vDash").nextSibling);
+  VIEWS.push("vIzinG"); PETA.vIzinG = "izn";
+
+  function itemGuru(x, menunggu){
+    var it = el("div", "izItem"), top = el("div", "it");
+    top.appendChild(el("b", "", x.nama));
+    top.appendChild(menunggu ? el("span", "izJ", (EJ[x.jenis] || "") + " " + x.jenis) : lencana(x.status));
+    it.appendChild(top);
+    it.appendChild(el("small", "", (menunggu ? "" : (EJ[x.jenis] || "") + " " + x.jenis + " · ") + tglPanjang(x.tanggal)));
+    it.appendChild(el("div", "ia", x.alasan));
+    if(menunggu){
+      if(x.statusAda) it.appendChild(el("small", "warn", "Absen tanggal ini sudah tercatat: " + x.statusAda + " (akan diganti jika disetujui)"));
+      var bar = el("div", "bar"), ok = el("button", "green", "✅ Setujui"), no = el("button", "red", "✖ Tolak");
+      ok.type = "button"; no.type = "button";
+      ok.onclick = function(){
+        var jalan = function(){ proses(x, true); };
+        if(x.statusAda && x.statusAda !== x.jenis) konfirmasi("Absen " + x.nama + " pada tanggal itu sudah tercatat " + x.statusAda + ". Ganti menjadi " + x.jenis + "?", "Ganti", jalan);
+        else jalan();
+      };
+      no.onclick = function(){ konfirmasi("Tolak pengajuan " + x.jenis.toLowerCase() + " " + x.nama + "?", "Tolak", function(){ proses(x, false); }); };
+      bar.appendChild(ok); bar.appendChild(no); it.appendChild(bar);
+    } else if(x.oleh){
+      it.appendChild(el("small", "", x.status + " oleh " + x.oleh + (x.pada ? " · " + x.pada : "")));
+    }
+    return it;
+  }
+  function gambarGIzin(r){
+    var w = $("igWait"), d = $("igDone"); w.innerHTML = ""; d.innerHTML = "";
+    $("igInfo").textContent = r.menunggu.length ? r.menunggu.length + " pengajuan menunggu persetujuan Anda." : "Tidak ada pengajuan yang menunggu.";
+    if(!r.menunggu.length) w.appendChild(el("div", "izKosong", "Semua pengajuan sudah diproses."));
+    r.menunggu.forEach(function(x){ w.appendChild(itemGuru(x, true)); });
+    if(!r.riwayat.length) d.appendChild(el("div", "izKosong", "Belum ada riwayat."));
+    r.riwayat.forEach(function(x){ d.appendChild(itemGuru(x, false)); });
+    IZN = r.menunggu.length; pasangBadge();
+  }
+  function muatGIzin(pesan, kelas){
+    ambil("getIzinGuru", { token:S.token }, $("igMsg"), function(r){
+      gambarGIzin(r);
+      if(pesan) say($("igMsg"), pesan, kelas || "ok");
+    }, logout);
+  }
+  function proses(x, setuju){
+    say($("igMsg"), "Memproses...", "info");
+    api("prosesIzin", { token:S.token, id:x.id, keputusan:setuju ? "setuju" : "tolak" }).then(function(r){
+      if(sesiHabis(r)){ logout(r.message); return; }
+      if(!r || r.status !== "success"){ muatGIzin((r && r.message) || "Gagal memproses.", "err"); return; }
+      if(setuju && x.tanggal === wibSekarang().tgl) muatSiswa();   // dashboard ikut diperbarui
+      muatGIzin(r.message, "ok");
+    }).catch(function(e){ say($("igMsg"), galat(e), "err"); });
+  }
+
+  // ===== lencana jumlah pengajuan di menu guru =====
+  function pasangBadge(){
+    var b = nav.querySelector('[data-go="izn"]'); if(!b) return;
+    var i = b.querySelector(".izBd");
+    if(!i){ i = document.createElement("i"); i.className = "izBd"; b.appendChild(i); }
+    i.textContent = IZN > 99 ? "99+" : String(IZN); i.style.display = IZN > 0 ? "" : "none";
+  }
+  function cekBadge(){
+    if(!S.token) return;
+    if(S.token === tokBadge && Date.now() - tBadge < 45000) return;
+    tokBadge = S.token; tBadge = Date.now();
+    api("getIzinGuru", { token:S.token, ringan:true }).then(function(r){
+      if(r && r.status === "success"){ IZN = r.menunggu.length; pasangBadge(); }
+    }).catch(function(){});
+  }
+  var _showIzin = show;
+  show = function(id){
+    _showIzin(id);
+    if(NAVROLE === "guru" && PETA[id]){ pasangBadge(); if(id === "vDash") cekBadge(); }
+  };
+
+  // ===== menu navigasi =====
+  var _goIzin = go;
+  go = function(k){
+    if(NAVROLE === "wali" && k === "iz"){ bukaWIzin(); return; }
+    if(NAVROLE === "guru" && k === "izn"){ try{ stopCam(); }catch(e){} show("vIzinG"); muatGIzin(); return; }
+    _goIzin(k);
   };
 })();
 
