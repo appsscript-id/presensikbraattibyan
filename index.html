@@ -1565,6 +1565,13 @@ body.app #vKepsek #kList{flex:0 1 auto}
 #infoBox input[type=time]:focus{outline:none;border-color:var(--brand);background:var(--card);box-shadow:0 0 0 4px rgba(47,125,246,.14)}
 .infoW.pc{background:var(--accent-soft)}
 .infoW.pc b{color:#b36b00}
+#infoBox .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+#infoBox .chip{width:auto;margin:0;padding:9px 14px;font-size:14px;font-weight:700;background:var(--field);color:var(--ink2);box-shadow:none}
+#infoBox .chip.on{background:var(--brand);color:#fff}
+#infoBox .jamSel{display:flex;align-items:center;gap:10px}
+#infoBox .jamSel select{flex:1;width:auto;margin-bottom:0;text-align:center}
+#infoBox .jamSel b{font-size:22px;color:var(--ink2)}
+#infoBox .jamBesar{margin:10px 0 4px;padding:10px 14px;border-radius:14px;background:var(--accent-soft);color:#b36b00;font-weight:800;font-size:15px;text-align:center}
 </style>
 <script>
 function mulaiUI(){
@@ -3168,14 +3175,40 @@ function konfirmasi(teks, labelOk, fn){
   var ib = el("div"); ib.id = "infoBox";
   ib.innerHTML = '<h4>Umumkan ke wali murid</h4>' +
     '<div class="row"><button type="button" class="seg" data-ij="Libur mendadak">🚨 Libur mendadak</button><button type="button" class="seg" data-ij="Pulang cepat">⏰ Pulang cepat</button><button type="button" class="seg" data-ij="Pengumuman">📢 Pengumuman</button></div>' +
-    '<label class="izl" for="inMulai">Tanggal mulai</label><input type="date" id="inMulai">' +
+    '<label class="izl" for="inMulai">Tanggal mulai</label>' +
+    '<div class="chips"><button type="button" class="chip" data-hr="0">Hari ini</button><button type="button" class="chip" data-hr="1">Besok</button></div><input type="date" id="inMulai">' +
     '<label class="izl" for="inSampai">Sampai tanggal (kosongkan bila 1 hari)</label><input type="date" id="inSampai">' +
-    '<div id="inJamBox" style="display:none"><label class="izl" for="inJam">Jam pulang</label><input type="time" id="inJam" value="10:00"></div>' +
+    '<div id="inJamBox" style="display:none"><div class="izl">Jam pulang</div><div class="chips" id="inJamChips"></div>' +
+      '<div class="jamSel"><select id="inJH" class="full" aria-label="Jam"></select><b>.</b><select id="inJM" class="full" aria-label="Menit"></select></div>' +
+      '<div id="inJamTampil" class="jamBesar"></div><input type="hidden" id="inJam" value="10:00"></div>' +
     '<div class="izl">Untuk</div><div class="row"><button type="button" class="seg" data-iu="kelas" id="inUKelas">Kelas saya</button><button type="button" class="seg" data-iu="semua">Semua kelas</button></div>' +
     '<label class="izl" for="inKet" id="inKetL">Keterangan</label><textarea id="inKet" maxlength="200" rows="3" placeholder="Contoh: Libur hari ini karena hujan deras"></textarea>' +
     '<button type="button" id="inKirim">📢 Umumkan</button><div id="inMsg" class="msg"></div>' +
     '<h4>Pengumuman aktif</h4><div id="inList"></div>';
   h3.parentNode.insertBefore(ib, h3.nextSibling);
+
+  // pilihan jam pulang: tombol cepat + pilihan jam/menit (tanpa jam bawaan HP yang sering terpotong)
+  var JAMCHIP = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30"];
+  var cj = $("inJamChips"), JH = $("inJH"), JM = $("inJM");
+  JAMCHIP.forEach(function(v){ var c = el("button", "chip", v.replace(":", ".")); c.type = "button"; c.setAttribute("data-jm", v); cj.appendChild(c); });
+  for(var hh = 6; hh <= 17; hh++){ var oh = el("option", "", ("0" + hh).slice(-2)); oh.value = ("0" + hh).slice(-2); JH.appendChild(oh); }
+  for(var mm = 0; mm < 60; mm += 5){ var om = el("option", "", ("0" + mm).slice(-2)); om.value = ("0" + mm).slice(-2); JM.appendChild(om); }
+  function setJam(v){
+    var p = v.split(":"); JH.value = p[0]; JM.value = p[1]; $("inJam").value = v;
+    $("inJamTampil").textContent = "Pulang pukul " + v.replace(":", ".");
+    Array.prototype.forEach.call(cj.children, function(b){ b.classList.toggle("on", b.getAttribute("data-jm") === v); });
+  }
+  JH.onchange = JM.onchange = function(){ setJam(JH.value + ":" + JM.value); };
+  setJam("10:00");
+  ib.addEventListener("click", function(e){
+    var c = e.target.closest("button.chip"); if(!c) return;
+    if(c.hasAttribute("data-jm")){ setJam(c.getAttribute("data-jm")); return; }
+    if(c.hasAttribute("data-hr")){
+      var d = utcDari(wibSekarang().tgl); d.setUTCDate(d.getUTCDate() + Number(c.getAttribute("data-hr")));
+      var k = kunciDari(d); $("inMulai").value = k;
+      if($("inSampai").value && $("inSampai").value < k) $("inSampai").value = "";
+    }
+  });
 
   function tandaiInfo(){
     Array.prototype.forEach.call(ib.querySelectorAll(".seg"), function(b){
