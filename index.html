@@ -1559,6 +1559,12 @@ body.app #vKepsek #kList{flex:0 1 auto}
 #infoBox textarea:focus{outline:none;border-color:var(--brand);background:var(--card);box-shadow:0 0 0 4px rgba(47,125,246,.14)}
 #infoBox textarea::placeholder{color:var(--muted);font-weight:500}
 #infoBox{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:6px}
+#infoBox .row{flex-wrap:wrap}
+#infoBox .seg{flex:1 1 30%;font-size:13.5px;padding:12px 8px}
+#infoBox input[type=time]{width:100%;padding:14px 16px;margin-bottom:4px;border:1.5px solid transparent;border-radius:var(--r-sm);font-size:15px;font-weight:500;background:var(--field);color:var(--ink);transition:.18s;font-family:inherit}
+#infoBox input[type=time]:focus{outline:none;border-color:var(--brand);background:var(--card);box-shadow:0 0 0 4px rgba(47,125,246,.14)}
+.infoW.pc{background:var(--accent-soft)}
+.infoW.pc b{color:#b36b00}
 </style>
 <script>
 function mulaiUI(){
@@ -3093,6 +3099,8 @@ function konfirmasi(teks, labelOk, fn){
   var INFO = [], INFO_T = 0, INFO_TOK = "", INFO_P = null, JENIS_INFO = "Libur mendadak", UNTUK_INFO = "kelas";
   function el(tag, cls, teks){ var e = document.createElement(tag); if(cls) e.className = cls; if(teks !== undefined) e.textContent = teks; return e; }
   function tglRentang(i){ return i.sampai !== i.mulai ? tglIndo(i.mulai) + " – " + tglIndo(i.sampai) : tglIndo(i.mulai) + " " + i.mulai.substring(0, 4); }
+  var IKON = { "Libur mendadak":"🚨", "Pulang cepat":"⏰", "Pengumuman":"📢" };
+  function judulInfo(i){ return i.jenis + (i.jenis === "Pulang cepat" && i.jam ? " · pukul " + i.jam.replace(":", ".") : ""); }
 
   // ----- ambil data (wali atau guru, sesuai yang sedang masuk) -----
   function tokenInfo(){
@@ -3144,12 +3152,13 @@ function konfirmasi(teks, labelOk, fn){
     cw.innerHTML = "";
     var today = wibSekarang().tgl;
     INFO.slice(0, 5).forEach(function(i){
-      var lm = i.jenis === "Libur mendadak", kini = i.mulai <= today && i.sampai >= today;
-      var k = el("div", "infoW" + (lm ? " lm" : "")), tx = el("span");
-      tx.appendChild(el("b", "", (kini ? "Hari ini · " : "") + i.jenis));
-      tx.appendChild(el("div", "it2", i.ket));
+      var kini = i.mulai <= today && i.sampai >= today;
+      var cls = i.jenis === "Libur mendadak" ? " lm" : i.jenis === "Pulang cepat" ? " pc" : "";
+      var k = el("div", "infoW" + cls), tx = el("span");
+      tx.appendChild(el("b", "", (kini ? "Hari ini · " : "") + judulInfo(i)));
+      if(i.ket) tx.appendChild(el("div", "it2", i.ket));
       tx.appendChild(el("small", "", tglRentang(i)));
-      k.appendChild(el("span", "we", lm ? "🚨" : "📢")); k.appendChild(tx); cw.appendChild(k);
+      k.appendChild(el("span", "we", IKON[i.jenis] || "📢")); k.appendChild(tx); cw.appendChild(k);
     });
   }
 
@@ -3158,11 +3167,12 @@ function konfirmasi(teks, labelOk, fn){
   h3.textContent = "📅 Libur & Pengumuman";
   var ib = el("div"); ib.id = "infoBox";
   ib.innerHTML = '<h4>Umumkan ke wali murid</h4>' +
-    '<div class="row"><button type="button" class="seg" data-ij="Libur mendadak">🚨 Libur mendadak</button><button type="button" class="seg" data-ij="Pengumuman">📢 Pengumuman</button></div>' +
+    '<div class="row"><button type="button" class="seg" data-ij="Libur mendadak">🚨 Libur mendadak</button><button type="button" class="seg" data-ij="Pulang cepat">⏰ Pulang cepat</button><button type="button" class="seg" data-ij="Pengumuman">📢 Pengumuman</button></div>' +
     '<label class="izl" for="inMulai">Tanggal mulai</label><input type="date" id="inMulai">' +
     '<label class="izl" for="inSampai">Sampai tanggal (kosongkan bila 1 hari)</label><input type="date" id="inSampai">' +
+    '<div id="inJamBox" style="display:none"><label class="izl" for="inJam">Jam pulang</label><input type="time" id="inJam" value="10:00"></div>' +
     '<div class="izl">Untuk</div><div class="row"><button type="button" class="seg" data-iu="kelas" id="inUKelas">Kelas saya</button><button type="button" class="seg" data-iu="semua">Semua kelas</button></div>' +
-    '<label class="izl" for="inKet">Keterangan</label><textarea id="inKet" maxlength="200" rows="3" placeholder="Contoh: Libur hari ini karena hujan deras"></textarea>' +
+    '<label class="izl" for="inKet" id="inKetL">Keterangan</label><textarea id="inKet" maxlength="200" rows="3" placeholder="Contoh: Libur hari ini karena hujan deras"></textarea>' +
     '<button type="button" id="inKirim">📢 Umumkan</button><div id="inMsg" class="msg"></div>' +
     '<h4>Pengumuman aktif</h4><div id="inList"></div>';
   h3.parentNode.insertBefore(ib, h3.nextSibling);
@@ -3172,6 +3182,10 @@ function konfirmasi(teks, labelOk, fn){
       if(b.hasAttribute("data-ij")) b.classList.toggle("on", b.getAttribute("data-ij") === JENIS_INFO);
       else b.classList.toggle("on", b.getAttribute("data-iu") === UNTUK_INFO);
     });
+    var pc = JENIS_INFO === "Pulang cepat";
+    $("inJamBox").style.display = pc ? "" : "none";
+    $("inKetL").textContent = pc ? "Keterangan (boleh dikosongkan)" : "Keterangan";
+    $("inKet").placeholder = pc ? "Contoh: Ada rapat guru" : JENIS_INFO === "Pengumuman" ? "Contoh: Besok membawa baju olahraga" : "Contoh: Libur hari ini karena hujan deras";
   }
   ib.addEventListener("click", function(e){
     var b = e.target.closest("button.seg"); if(!b) return;
@@ -3195,10 +3209,12 @@ function konfirmasi(teks, labelOk, fn){
     if(!a){ say(m, "Pilih tanggal mulai dulu.", "err"); return; }
     if($("inMulai").min && a < $("inMulai").min){ say(m, "Tanggal mulai tidak boleh sebelum hari ini.", "err"); return; }
     if(b < a){ say(m, "Tanggal akhir tidak boleh sebelum tanggal mulai.", "err"); return; }
-    if(k.length < 3){ say(m, "Tulis keterangan singkat (minimal 3 huruf).", "err"); return; }
+    var pc = JENIS_INFO === "Pulang cepat", jam = $("inJam").value;
+    if(pc && !jam){ say(m, "Isi jam pulang dulu.", "err"); return; }
+    if(k.length < 3 && !(pc && k.length === 0)){ say(m, "Tulis keterangan singkat (minimal 3 huruf).", "err"); return; }
     var kirim = function(){
       var bt = $("inKirim"); bt.disabled = true; say(m, "Mengirim...", "info");
-      api("tambahInfoGuru", { token:S.token, jenis:JENIS_INFO, mulai:a, sampai:b, ket:k, untuk:UNTUK_INFO }).then(function(r){
+      api("tambahInfoGuru", { token:S.token, jenis:JENIS_INFO, mulai:a, sampai:b, ket:k, untuk:UNTUK_INFO, jam:pc ? jam : "" }).then(function(r){
         bt.disabled = false;
         if(sesiHabis(r)){ logout(r.message); return; }
         if(!r || r.status !== "success"){ say(m, (r && r.message) || "Gagal mengirim.", "err"); return; }
@@ -3214,11 +3230,11 @@ function konfirmasi(teks, labelOk, fn){
     box.innerHTML = "";
     if(!INFO.length){ box.appendChild(el("div", "izKosong", "Belum ada pengumuman aktif.")); return; }
     INFO.forEach(function(i){
-      var lm = i.jenis === "Libur mendadak", it = el("div", "izItem"), top = el("div", "it");
-      top.appendChild(el("b", "", (lm ? "🚨 " : "📢 ") + i.jenis));
+      var it = el("div", "izItem"), top = el("div", "it");
+      top.appendChild(el("b", "", (IKON[i.jenis] || "📢") + " " + judulInfo(i)));
       top.appendChild(el("span", "izJ", i.untuk === "Semua" ? "Semua kelas" : i.untuk));
       it.appendChild(top);
-      it.appendChild(el("div", "ia", i.ket));
+      if(i.ket) it.appendChild(el("div", "ia", i.ket));
       it.appendChild(el("small", "", tglRentang(i) + (i.oleh ? " · " + i.oleh : "")));
       if(i.milikku){
         var bt = el("button", "gray", "🗑️ Hapus"); bt.type = "button";
