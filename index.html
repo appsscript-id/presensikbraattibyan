@@ -1543,6 +1543,22 @@ body.app #vKepsek #kList{flex:0 1 auto}
 #vWIzin:not(.hidden),#vIzinG:not(.hidden){max-height:calc(100vh - 104px);max-height:calc(100dvh - 104px);overflow-y:auto}
 @media (max-width:899px){#vWIzin:not(.hidden),#vIzinG:not(.hidden){max-height:none;overflow:visible}}
 @media (min-width:900px){body.app #vWIzin,body.app #vIzinG{max-width:620px;width:100%;margin-left:auto;margin-right:auto}}
+/* ===== v16: libur mendadak & pengumuman ===== */
+.infoW{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:18px;margin:0 0 10px;background:var(--brand-soft);color:var(--ink2)}
+.infoW .we{font-size:26px;line-height:1.1}
+.infoW b{display:block;font-size:15px;font-weight:800;line-height:1.25;color:var(--ink)}
+.infoW .it2{font-size:13.5px;font-weight:600;margin-top:2px;word-break:break-word}
+.infoW small{display:block;font-size:12px;font-weight:700;opacity:.85;margin-top:3px}
+.infoW.lm{background:rgba(229,72,77,.12)}
+.infoW.lm b{color:var(--bad)}
+#infoBox h4{margin:14px 0 8px;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+#infoBox .row{display:flex;gap:10px;align-items:center}
+#infoBox .seg{flex:1;margin:0;background:var(--field);color:var(--ink2);box-shadow:none}
+#infoBox .seg.on{background:var(--brand);color:#fff}
+#infoBox textarea{width:100%;padding:14px 16px;margin-bottom:6px;border:1.5px solid transparent;border-radius:var(--r-sm);font-size:15px;font-weight:500;background:var(--field);color:var(--ink);font-family:inherit;resize:vertical;min-height:84px;transition:.18s}
+#infoBox textarea:focus{outline:none;border-color:var(--brand);background:var(--card);box-shadow:0 0 0 4px rgba(47,125,246,.14)}
+#infoBox textarea::placeholder{color:var(--muted);font-weight:500}
+#infoBox{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:6px}
 </style>
 <script>
 function mulaiUI(){
@@ -3069,6 +3085,169 @@ function konfirmasi(teks, labelOk, fn){
     if(NAVROLE === "wali" && k === "iz"){ bukaWIzin(); return; }
     if(NAVROLE === "guru" && k === "izn"){ try{ stopCam(); }catch(e){} show("vIzinG"); muatGIzin(); return; }
     _goIzin(k);
+  };
+})();
+
+// ---------- v16: libur mendadak & pengumuman dari guru, tampil di beranda wali ----------
+(function(){
+  var INFO = [], INFO_T = 0, INFO_TOK = "", INFO_P = null, JENIS_INFO = "Libur mendadak", UNTUK_INFO = "kelas";
+  function el(tag, cls, teks){ var e = document.createElement(tag); if(cls) e.className = cls; if(teks !== undefined) e.textContent = teks; return e; }
+  function tglRentang(i){ return i.sampai !== i.mulai ? tglIndo(i.mulai) + " – " + tglIndo(i.sampai) : tglIndo(i.mulai) + " " + i.mulai.substring(0, 4); }
+
+  // ----- ambil data (wali atau guru, sesuai yang sedang masuk) -----
+  function tokenInfo(){
+    if(NAVROLE === "wali" && W.token) return { act:"getInfoWali", token:W.token };
+    if(NAVROLE === "guru" && S.token) return { act:"getInfoGuru", token:S.token };
+    return null;
+  }
+  function muatInfoSekolah(paksa){
+    var t = tokenInfo();
+    if(!t){ INFO = []; INFO_TOK = ""; return Promise.resolve(INFO); }
+    if(INFO_TOK !== t.token){ INFO = []; INFO_T = 0; }
+    if(INFO_P) return INFO_P;
+    if(!paksa && INFO_TOK === t.token && Date.now() - INFO_T < 30000) return Promise.resolve(INFO);
+    INFO_P = api(t.act, { token:t.token }).then(function(r){
+      if(r && r.status === "success"){ INFO = r.list || []; INFO_TOK = t.token; INFO_T = Date.now(); }
+      INFO_P = null; return INFO;
+    }).catch(function(){ INFO_P = null; return INFO; });
+    return INFO_P;
+  }
+
+  // libur mendadak ikut masuk daftar libur + penanda kalender (tanpa mengubah sheet "Hari Libur")
+  function gabungInfoKeLibur(){
+    if(!LIBUR) return;
+    LIBUR = LIBUR.filter(function(x){ return !x.info; });
+    INFO.forEach(function(i){
+      if(i.jenis === "Libur mendadak") LIBUR.push({ mulai:i.mulai, selesai:i.sampai, ket:i.ket, jenis:"Libur mendadak", info:true });
+    });
+    LIBUR.sort(function(x, y){ return x.mulai < y.mulai ? -1 : x.mulai > y.mulai ? 1 : 0; });
+    LIBURMAP = {};
+    LIBUR.forEach(function(x){
+      var d = utcDari(x.mulai), e = utcDari(x.selesai), n = 0;
+      while(d <= e && n++ < 400){ LIBURMAP[kunciDari(d)] = x.ket; d.setUTCDate(d.getUTCDate() + 1); }
+    });
+    ingatkan();
+  }
+  var _muatLiburInfo = muatLibur;
+  muatLibur = function(paksa){
+    return _muatLiburInfo(paksa).then(function(){ return muatInfoSekolah(paksa); }).then(function(){
+      gabungInfoKeLibur();
+      if(NAVROLE === "wali") gambarInfoWali(); else if(NAVROLE === "guru") gambarInfoGuru();
+      return LIBUR;
+    });
+  };
+
+  // ===== beranda wali: kartu pengumuman di atas status hari ini =====
+  var cw = el("div"); cw.id = "wInfoSekolah";
+  $("wHariIni").parentNode.insertBefore(cw, $("wHariIni"));
+  function gambarInfoWali(){
+    cw.innerHTML = "";
+    var today = wibSekarang().tgl;
+    INFO.slice(0, 5).forEach(function(i){
+      var lm = i.jenis === "Libur mendadak", kini = i.mulai <= today && i.sampai >= today;
+      var k = el("div", "infoW" + (lm ? " lm" : "")), tx = el("span");
+      tx.appendChild(el("b", "", (kini ? "Hari ini · " : "") + i.jenis));
+      tx.appendChild(el("div", "it2", i.ket));
+      tx.appendChild(el("small", "", tglRentang(i)));
+      k.appendChild(el("span", "we", lm ? "🚨" : "📢")); k.appendChild(tx); cw.appendChild(k);
+    });
+  }
+
+  // ===== menu Libur guru: form umumkan + daftar aktif =====
+  var h3 = $("vLibur").querySelector("h3");
+  h3.textContent = "📅 Libur & Pengumuman";
+  var ib = el("div"); ib.id = "infoBox";
+  ib.innerHTML = '<h4>Umumkan ke wali murid</h4>' +
+    '<div class="row"><button type="button" class="seg" data-ij="Libur mendadak">🚨 Libur mendadak</button><button type="button" class="seg" data-ij="Pengumuman">📢 Pengumuman</button></div>' +
+    '<label class="izl" for="inMulai">Tanggal mulai</label><input type="date" id="inMulai">' +
+    '<label class="izl" for="inSampai">Sampai tanggal (kosongkan bila 1 hari)</label><input type="date" id="inSampai">' +
+    '<div class="izl">Untuk</div><div class="row"><button type="button" class="seg" data-iu="kelas" id="inUKelas">Kelas saya</button><button type="button" class="seg" data-iu="semua">Semua kelas</button></div>' +
+    '<label class="izl" for="inKet">Keterangan</label><textarea id="inKet" maxlength="200" rows="3" placeholder="Contoh: Libur hari ini karena hujan deras"></textarea>' +
+    '<button type="button" id="inKirim">📢 Umumkan</button><div id="inMsg" class="msg"></div>' +
+    '<h4>Pengumuman aktif</h4><div id="inList"></div>';
+  h3.parentNode.insertBefore(ib, h3.nextSibling);
+
+  function tandaiInfo(){
+    Array.prototype.forEach.call(ib.querySelectorAll(".seg"), function(b){
+      if(b.hasAttribute("data-ij")) b.classList.toggle("on", b.getAttribute("data-ij") === JENIS_INFO);
+      else b.classList.toggle("on", b.getAttribute("data-iu") === UNTUK_INFO);
+    });
+  }
+  ib.addEventListener("click", function(e){
+    var b = e.target.closest("button.seg"); if(!b) return;
+    if(b.hasAttribute("data-ij")) JENIS_INFO = b.getAttribute("data-ij"); else UNTUK_INFO = b.getAttribute("data-iu");
+    tandaiInfo();
+  });
+  function isiFormInfo(){
+    var n = wibSekarang().tgl, d = utcDari(n), mx = new Date(d), a = $("inMulai"), b = $("inSampai");
+    mx.setUTCDate(mx.getUTCDate() + 60);
+    a.min = n; a.max = kunciDari(mx); b.min = n; b.max = kunciDari(mx);
+    if(!a.value || a.value < n) a.value = n;
+    $("inUKelas").textContent = S.kelas ? "Kelas " + S.kelas : "Kelas saya";
+    tandaiInfo();
+  }
+
+  function segarkanInfoGuru(){
+    return muatInfoSekolah(true).then(function(){ gabungInfoKeLibur(); gambarInfoGuru(); if(LIBUR) gambarLibur(); });
+  }
+  $("inKirim").onclick = function(){
+    var m = $("inMsg"), a = $("inMulai").value, b = $("inSampai").value || a, k = $("inKet").value.replace(/\s+/g, " ").trim();
+    if(!a){ say(m, "Pilih tanggal mulai dulu.", "err"); return; }
+    if($("inMulai").min && a < $("inMulai").min){ say(m, "Tanggal mulai tidak boleh sebelum hari ini.", "err"); return; }
+    if(b < a){ say(m, "Tanggal akhir tidak boleh sebelum tanggal mulai.", "err"); return; }
+    if(k.length < 3){ say(m, "Tulis keterangan singkat (minimal 3 huruf).", "err"); return; }
+    var kirim = function(){
+      var bt = $("inKirim"); bt.disabled = true; say(m, "Mengirim...", "info");
+      api("tambahInfoGuru", { token:S.token, jenis:JENIS_INFO, mulai:a, sampai:b, ket:k, untuk:UNTUK_INFO }).then(function(r){
+        bt.disabled = false;
+        if(sesiHabis(r)){ logout(r.message); return; }
+        if(!r || r.status !== "success"){ say(m, (r && r.message) || "Gagal mengirim.", "err"); return; }
+        $("inKet").value = ""; $("inSampai").value = ""; say(m, r.message, "ok");
+        segarkanInfoGuru();
+      }).catch(function(e){ bt.disabled = false; say(m, galat(e), "err"); });
+    };
+    if(UNTUK_INFO === "semua") konfirmasi("Umumkan ke wali murid SEMUA kelas?", "Umumkan", kirim); else kirim();
+  };
+
+  function gambarInfoGuru(){
+    var box = $("inList"); if(!box) return;
+    box.innerHTML = "";
+    if(!INFO.length){ box.appendChild(el("div", "izKosong", "Belum ada pengumuman aktif.")); return; }
+    INFO.forEach(function(i){
+      var lm = i.jenis === "Libur mendadak", it = el("div", "izItem"), top = el("div", "it");
+      top.appendChild(el("b", "", (lm ? "🚨 " : "📢 ") + i.jenis));
+      top.appendChild(el("span", "izJ", i.untuk === "Semua" ? "Semua kelas" : i.untuk));
+      it.appendChild(top);
+      it.appendChild(el("div", "ia", i.ket));
+      it.appendChild(el("small", "", tglRentang(i) + (i.oleh ? " · " + i.oleh : "")));
+      if(i.milikku){
+        var bt = el("button", "gray", "🗑️ Hapus"); bt.type = "button";
+        bt.onclick = function(){
+          konfirmasi("Hapus " + i.jenis.toLowerCase() + " ini? Wali murid tidak akan melihatnya lagi.", "Hapus", function(){
+            say($("inMsg"), "Menghapus...", "info");
+            api("hapusInfoGuru", { token:S.token, id:i.id }).then(function(r){
+              if(sesiHabis(r)){ logout(r.message); return; }
+              if(!r || r.status !== "success"){ say($("inMsg"), (r && r.message) || "Gagal menghapus.", "err"); return; }
+              say($("inMsg"), r.message, "ok"); segarkanInfoGuru();
+            }).catch(function(e){ say($("inMsg"), galat(e), "err"); });
+          });
+        };
+        it.appendChild(bt);
+      }
+      box.appendChild(it);
+    });
+  }
+
+  // ===== muat ulang saat halaman dibuka =====
+  var _showInfo = show;
+  show = function(id){
+    _showInfo(id);
+    if(id === "vWaliHasil" && NAVROLE === "wali"){
+      muatInfoSekolah().then(function(){ gabungInfoKeLibur(); gambarInfoWali(); });
+    } else if(id === "vLibur" && NAVROLE === "guru"){
+      isiFormInfo();
+      muatInfoSekolah().then(function(){ gabungInfoKeLibur(); gambarInfoGuru(); if(LIBUR) gambarLibur(); });
+    }
   };
 })();
 
