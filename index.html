@@ -389,8 +389,8 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "3.8.0";
-var APP_TGL = "17 Oktober 2026";
+var APP_VERSI = "3.9.0";
+var APP_TGL = "18 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
 var FACEAPI_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js";
@@ -1884,7 +1884,7 @@ var NAVGURU = '<div class="nh"><img src="logo.png" alt="" onerror="this.style.di
   [["abs","🏠","Absensi"],["izn","📝","Izin"],["rek","📊","Rekap"],["lib","📅","Libur"],["set","⚙️","Pengaturan"],["out","🚪","Keluar"]].map(function(i){
     return '<button type="button" class="nb' + (i[0] === "out" ? " out" : "") + '" data-go="' + i[0] + '"><span>' + i[1] + '</span>' + i[2] + '</button>'; }).join("");
 var NAVKEPSEK = '<div class="nh"><img src="logo.png" alt="" onerror="this.style.display=\'none\'"><div><b>KB RA At Tibyan</b><small id="nvNama"></small></div></div>' +
-  [["kb","🏠","Ringkasan"],["kr","📊","Rekap Siswa"],["kl","🕒","Riwayat Login"],["ks","⚙️","Pengaturan"],["out","🚪","Keluar"]].map(function(i){
+  [["kb","🏠","Ringkasan"],["kz","📝","Izin"],["ki","📢","Info"],["kr","📊","Rekap"],["kl","🕒","Login"],["ks","⚙️","Pengaturan"],["out","🚪","Keluar"]].map(function(i){
     return '<button type="button" class="nb' + (i[0] === "out" ? " out" : "") + '" data-go="' + i[0] + '"><span>' + i[1] + '</span>' + i[2] + '</button>'; }).join("");
 var NAVROLE = "guru"; nav.innerHTML = NAVGURU;
 document.body.appendChild(nav);
@@ -3106,7 +3106,7 @@ function konfirmasi(teks, labelOk, fn){
 
 // ---------- v16: libur mendadak & pengumuman dari guru, tampil di beranda wali ----------
 (function(){
-  var INFO = [], INFO_T = 0, INFO_TOK = "", INFO_P = null, JENIS_INFO = "Libur mendadak", UNTUK_INFO = "kelas";
+  var INFO = [], INFO_T = 0, INFO_TOK = "", INFO_P = null, JENIS_INFO = "Libur mendadak", UNTUK_INFO = "kelas", EDIT = null;
   function el(tag, cls, teks){ var e = document.createElement(tag); if(cls) e.className = cls; if(teks !== undefined) e.textContent = teks; return e; }
   function tglRentang(i){ return i.sampai !== i.mulai ? tglIndo(i.mulai) + " – " + tglIndo(i.sampai) : tglIndo(i.mulai) + " " + i.mulai.substring(0, 4); }
   var IKON = { "Libur mendadak":"🚨", "Pulang cepat":"⏰", "Pengumuman":"📢" };
@@ -3116,6 +3116,7 @@ function konfirmasi(teks, labelOk, fn){
   function tokenInfo(){
     if(NAVROLE === "wali" && W.token) return { act:"getInfoWali", token:W.token };
     if(NAVROLE === "guru" && S.token) return { act:"getInfoGuru", token:S.token };
+    if(NAVROLE === "kepsek" && K.token) return { act:"getInfoKepsek", token:K.token };
     return null;
   }
   function muatInfoSekolah(paksa){
@@ -3177,18 +3178,24 @@ function konfirmasi(teks, labelOk, fn){
   h3.textContent = "📅 Libur & Pengumuman";
   var ib = el("div"); ib.id = "infoBox";
   ib.innerHTML = '<h4>Umumkan ke wali murid</h4>' +
-    '<div class="row"><button type="button" class="seg" data-ij="Libur mendadak">🚨 Libur mendadak</button><button type="button" class="seg" data-ij="Pulang cepat">⏰ Pulang cepat</button><button type="button" class="seg" data-ij="Pengumuman">📢 Pengumuman</button></div>' +
+    '<div id="inEditInfo" class="b" style="display:none"></div><div class="row" id="inJenisRow"><button type="button" class="seg" data-ij="Libur mendadak">🚨 Libur mendadak</button><button type="button" class="seg" data-ij="Pulang cepat">⏰ Pulang cepat</button><button type="button" class="seg" data-ij="Pengumuman">📢 Pengumuman</button></div>' +
     '<label class="izl" for="inMulai">Tanggal mulai</label>' +
     '<div class="chips"><button type="button" class="chip" data-hr="0">Hari ini</button><button type="button" class="chip" data-hr="1">Besok</button><button type="button" class="chip" data-hr="2">Lusa</button></div><input type="date" id="inMulai">' +
     '<label class="izl" for="inSampai">Sampai tanggal (kosongkan bila 1 hari)</label><input type="date" id="inSampai">' +
     '<div id="inJamBox" style="display:none"><div class="izl">Jam pulang</div><div class="chips" id="inJamChips"></div>' +
       '<div class="jamSel"><select id="inJH" class="full" aria-label="Jam"></select><b>.</b><select id="inJM" class="full" aria-label="Menit"></select></div>' +
       '<div id="inJamTampil" class="jamBesar"></div><input type="hidden" id="inJam" value="10:00"></div>' +
-    '<div class="izl">Untuk</div><div class="row"><button type="button" class="seg" data-iu="kelas" id="inUKelas">Kelas saya</button><button type="button" class="seg" data-iu="semua">Semua kelas</button></div>' +
+    '<div id="inUntukBox"><div class="izl">Untuk</div><div id="inUntukGuru" class="b"></div><div class="row" id="inUntukRow"><button type="button" class="seg" data-iu="kelas" id="inUKelas">Satu kelas</button><button type="button" class="seg" data-iu="semua">Semua kelas</button></div><select id="inKelasPilih" class="full" style="display:none" aria-label="Kelas tujuan"></select></div>' +
     '<label class="izl" for="inKet" id="inKetL">Keterangan</label><textarea id="inKet" maxlength="200" rows="3" placeholder="Contoh: Libur hari ini karena hujan deras"></textarea>' +
-    '<button type="button" id="inKirim">📢 Umumkan</button><div id="inMsg" class="msg"></div>' +
+    '<button type="button" id="inKirim">📢 Umumkan</button><button type="button" class="gray" id="inBatal" style="display:none">Batal mengubah</button><div id="inMsg" class="msg"></div>' +
     '<h4>Pengumuman aktif</h4><div id="inList"></div>';
   h3.parentNode.insertBefore(ib, h3.nextSibling);
+
+  // v17: kepala sekolah memakai form yang sama di halaman Info miliknya (formnya dipindah saat halaman dibuka)
+  var vki = el("div", "card hidden"); vki.id = "vKInfo";
+  vki.innerHTML = '<h3>📢 Pengumuman Sekolah</h3><div class="b">Libur mendadak, pulang cepat, atau pengumuman untuk wali murid: semua kelas atau satu kelas saja.</div>';
+  $("vLibur").parentNode.insertBefore(vki, $("vLibur"));
+  VIEWS.push("vKInfo"); KPETA.vKInfo = "ki";
 
   // pilihan jam pulang: tombol cepat + pilihan jam/menit (tanpa jam bawaan HP yang sering terpotong)
   var JAMCHIP = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30"];
@@ -3230,6 +3237,14 @@ function konfirmasi(teks, labelOk, fn){
     $("inJamBox").style.display = pc ? "" : "none";
     $("inKetL").textContent = pc ? "Keterangan (boleh dikosongkan)" : "Keterangan";
     $("inKet").placeholder = pc ? "Contoh: Ada rapat guru" : JENIS_INFO === "Pengumuman" ? "Contoh: Besok membawa baju olahraga" : "Contoh: Libur hari ini karena hujan deras";
+    var kp = NAVROLE === "kepsek", ubah = !!EDIT;
+    $("inJenisRow").style.display = ubah ? "none" : "";
+    $("inUntukBox").style.display = ubah ? "none" : "";
+    $("inKelasPilih").style.display = (kp && UNTUK_INFO === "kelas") ? "" : "none";
+    $("inEditInfo").style.display = ubah ? "" : "none";
+    if(ubah) $("inEditInfo").textContent = "✏️ Mengubah " + (IKON[EDIT.jenis] || "📢") + " " + judulInfo(EDIT).toLowerCase() + " · " + (EDIT.untuk === "Semua" ? "semua kelas" : "kelas " + EDIT.untuk) + ". Yang bisa diubah: tanggal, jam, dan keterangan. Kalau salah jenis atau salah kelas, hapus lalu buat baru.";
+    $("inKirim").textContent = ubah ? "💾 Simpan Perubahan" : "📢 Umumkan";
+    $("inBatal").style.display = ubah ? "" : "none";
   }
   ib.addEventListener("click", function(e){
     var b = e.target.closest("button.seg"); if(!b) return;
@@ -3238,27 +3253,68 @@ function konfirmasi(teks, labelOk, fn){
   });
   function isiFormInfo(){
     var n = wibSekarang().tgl, d = utcDari(n), mx = new Date(d), a = $("inMulai"), b = $("inSampai");
+    var kp = NAVROLE === "kepsek";
     mx.setUTCDate(mx.getUTCDate() + 60);
     a.min = n; a.max = kunciDari(mx); b.min = n; b.max = kunciDari(mx);
+    if(EDIT){ EDIT = null; $("inKet").value = ""; a.value = ""; b.value = ""; JENIS_INFO = "Libur mendadak"; setJam("10:00"); }
     if(!a.value || a.value < n) a.value = n;
-    $("inUKelas").textContent = S.kelas ? "Kelas " + S.kelas : "Kelas saya";
+    UNTUK_INFO = kp ? "semua" : "kelas";   // "Semua kelas" hanya untuk kepala sekolah
+    $("inUntukRow").style.display = kp ? "" : "none";
+    $("inUntukGuru").style.display = kp ? "none" : "";
+    $("inUntukGuru").textContent = "Wali murid kelas " + (S.kelas || "Anda");
+    if(kp) isi($("inKelasPilih"), K.kelas, function(x){ return x.kelas; }, function(x){ return "Kelas " + x.kelas; });
     tandaiInfo(); tandaiTgl();
   }
+  function tokAktif(){ return NAVROLE === "kepsek" ? K.token : S.token; }
+  function resetForm(){
+    var n = wibSekarang().tgl;
+    EDIT = null; $("inKet").value = ""; $("inSampai").value = "";
+    $("inMulai").min = n; $("inSampai").min = n; $("inMulai").value = n;
+    JENIS_INFO = "Libur mendadak"; setJam("10:00"); tandaiInfo(); tandaiTgl();
+  }
+  function mulaiUbah(i){
+    var n = wibSekarang().tgl, a = $("inMulai"), b = $("inSampai");
+    EDIT = i; JENIS_INFO = i.jenis;
+    a.min = i.mulai < n ? i.mulai : n; b.min = n;
+    a.value = i.mulai; b.value = i.sampai !== i.mulai ? i.sampai : "";
+    $("inKet").value = i.ket || "";
+    if(i.jenis === "Pulang cepat" && i.jam) setJam(i.jam);
+    say($("inMsg"), "");
+    tandaiInfo(); tandaiTgl();
+    ib.scrollIntoView({ behavior:"smooth", block:"start" });
+  }
+  $("inBatal").onclick = function(){ resetForm(); say($("inMsg"), ""); };
 
   function segarkanInfoGuru(){
+    if(NAVROLE === "kepsek") return muatInfoSekolah(true).then(function(){ gambarInfoGuru(); });
     return muatInfoSekolah(true).then(function(){ gabungInfoKeLibur(); gambarInfoGuru(); if(LIBUR) gambarLibur(); });
   }
   $("inKirim").onclick = function(){
     var m = $("inMsg"), a = $("inMulai").value, b = $("inSampai").value || a, k = $("inKet").value.replace(/\s+/g, " ").trim();
+    var kp = NAVROLE === "kepsek";
     if(!a){ say(m, "Pilih tanggal mulai dulu.", "err"); return; }
     if($("inMulai").min && a < $("inMulai").min){ say(m, "Tanggal mulai tidak boleh sebelum hari ini.", "err"); return; }
     if(b < a){ say(m, "Tanggal akhir tidak boleh sebelum tanggal mulai.", "err"); return; }
     var pc = JENIS_INFO === "Pulang cepat", jam = $("inJam").value;
     if(pc && !jam){ say(m, "Isi jam pulang dulu.", "err"); return; }
     if(k.length < 3 && !(pc && k.length === 0)){ say(m, "Tulis keterangan singkat (minimal 3 huruf).", "err"); return; }
+    var bt = $("inKirim");
+    if(EDIT){   // simpan perubahan
+      bt.disabled = true; say(m, "Menyimpan...", "info");
+      api("ubahInfo", { token:tokAktif(), id:EDIT.id, mulai:a, sampai:b, ket:k, jam:pc ? jam : "" }).then(function(r){
+        bt.disabled = false;
+        if(sesiHabis(r)){ logout(r.message); return; }
+        if(!r || r.status !== "success"){ say(m, (r && r.message) || "Gagal menyimpan perubahan.", "err"); return; }
+        resetForm(); say(m, r.message, "ok");
+        segarkanInfoGuru();
+      }).catch(function(e){ bt.disabled = false; say(m, galat(e), "err"); });
+      return;
+    }
+    var untuk = UNTUK_INFO === "semua" ? "semua" : (kp ? $("inKelasPilih").value : "kelas");
+    if(!untuk){ say(m, "Pilih kelas tujuan dulu.", "err"); return; }
     var kirim = function(){
-      var bt = $("inKirim"); bt.disabled = true; say(m, "Mengirim...", "info");
-      api("tambahInfoGuru", { token:S.token, jenis:JENIS_INFO, mulai:a, sampai:b, ket:k, untuk:UNTUK_INFO, jam:pc ? jam : "" }).then(function(r){
+      bt.disabled = true; say(m, "Mengirim...", "info");
+      api("tambahInfoGuru", { token:tokAktif(), jenis:JENIS_INFO, mulai:a, sampai:b, ket:k, untuk:untuk, jam:pc ? jam : "" }).then(function(r){
         bt.disabled = false;
         if(sesiHabis(r)){ logout(r.message); return; }
         if(!r || r.status !== "success"){ say(m, (r && r.message) || "Gagal mengirim.", "err"); return; }
@@ -3266,7 +3322,7 @@ function konfirmasi(teks, labelOk, fn){
         segarkanInfoGuru();
       }).catch(function(e){ bt.disabled = false; say(m, galat(e), "err"); });
     };
-    if(UNTUK_INFO === "semua") konfirmasi("Umumkan ke wali murid SEMUA kelas?", "Umumkan", kirim); else kirim();
+    if(untuk === "semua") konfirmasi("Umumkan ke wali murid SEMUA kelas?", "Umumkan", kirim); else kirim();
   };
 
   function gambarInfoGuru(){
@@ -3281,13 +3337,17 @@ function konfirmasi(teks, labelOk, fn){
       if(i.ket) it.appendChild(el("div", "ia", i.ket));
       it.appendChild(el("small", "", tglRentang(i) + (i.oleh ? " · " + i.oleh : "")));
       if(i.milikku){
+        var bu = el("button", "gray", "✏️ Ubah"); bu.type = "button"; bu.style.marginRight = "8px";
+        bu.onclick = function(){ mulaiUbah(i); };
+        it.appendChild(bu);
         var bt = el("button", "gray", "🗑️ Hapus"); bt.type = "button";
         bt.onclick = function(){
           konfirmasi("Hapus " + i.jenis.toLowerCase() + " ini? Wali murid tidak akan melihatnya lagi.", "Hapus", function(){
             say($("inMsg"), "Menghapus...", "info");
-            api("hapusInfoGuru", { token:S.token, id:i.id }).then(function(r){
+            api("hapusInfoGuru", { token:tokAktif(), id:i.id }).then(function(r){
               if(sesiHabis(r)){ logout(r.message); return; }
               if(!r || r.status !== "success"){ say($("inMsg"), (r && r.message) || "Gagal menghapus.", "err"); return; }
+              if(EDIT && EDIT.id === i.id) resetForm();
               say($("inMsg"), r.message, "ok"); segarkanInfoGuru();
             }).catch(function(e){ say($("inMsg"), galat(e), "err"); });
           });
@@ -3307,8 +3367,13 @@ function konfirmasi(teks, labelOk, fn){
       try{ if(W.token) sessionStorage.setItem("sesiWali", JSON.stringify({ token:W.token, nama:W.nama, kelas:W.kelas })); }catch(e){}
       muatInfoSekolah().then(function(){ gabungInfoKeLibur(); gambarInfoWali(); });
     } else if(id === "vLibur" && NAVROLE === "guru"){
+      if(ib.parentNode !== h3.parentNode) h3.parentNode.insertBefore(ib, h3.nextSibling);
       isiFormInfo();
       muatInfoSekolah().then(function(){ gabungInfoKeLibur(); gambarInfoGuru(); if(LIBUR) gambarLibur(); });
+    } else if(id === "vKInfo" && NAVROLE === "kepsek"){
+      if(ib.parentNode !== vki) vki.appendChild(ib);
+      isiFormInfo();
+      muatInfoSekolah(true).then(function(){ gambarInfoGuru(); });
     }
   };
 
@@ -3369,6 +3434,119 @@ function konfirmasi(teks, labelOk, fn){
     segarkanWali().then(selesai, selesai);
   }, { passive:true });
   document.addEventListener("touchcancel", function(){ pa = false; ptrSembunyi(); }, { passive:true });
+})();
+
+// ---------- v17: kepala sekolah melihat izin & sakit semua kelas (menu Izin), menu Info, ringkasan izin/sakit per murid ----------
+(function(){
+  var EJ = { Izin:"📝", Sakit:"🤒" }, SERING = 3;   // SERING = jumlah hari izin+sakit dalam sebulan yang ditandai merah
+  function el(tag, cls, teks){ var e = document.createElement(tag); if(cls) e.className = cls; if(teks !== undefined) e.textContent = teks; return e; }
+  function tglPanjang(k){ return tglIndo(k) + " " + k.substring(0, 4); }
+  function lencana(st){
+    var c = st === "Menunggu" ? "izM" : st === "Disetujui" ? "izOk" : st === "Ditolak" ? "izTol" : "izBat";
+    return el("span", "izS " + c, st);
+  }
+
+  // ----- menu Izin kepala sekolah (hanya melihat) -----
+  var vz = el("div", "card hidden"); vz.id = "vKIzin";
+  vz.innerHTML = '<h3>📝 Izin &amp; Sakit Murid</h3>' +
+    '<div class="b">Pengajuan dari wali murid di semua kelas. Persetujuan dilakukan oleh guru kelas.</div>' +
+    '<select id="kzKelas" class="full" aria-label="Kelas"></select>' +
+    '<div id="kzInfo" class="b"></div><h4>Menunggu persetujuan guru</h4><div id="kzWait"></div>' +
+    '<h4>Riwayat terbaru</h4><div id="kzDone"></div><div id="kzMsg" class="msg"></div>';
+  $("vDash").parentNode.insertBefore(vz, $("vDash"));
+  VIEWS.push("vKIzin"); KPETA.vKIzin = "kz";
+
+  function isiKelasZ(){
+    var s = $("kzKelas"), cur = s.value; s.innerHTML = "";
+    var o0 = el("option", "", "Semua kelas"); o0.value = ""; s.appendChild(o0);
+    K.kelas.forEach(function(k){ var o = el("option", "", "Kelas " + k.kelas); o.value = k.kelas; s.appendChild(o); });
+    s.value = cur; if(s.value !== cur) s.value = "";
+  }
+  function itemK(x, menunggu){
+    var it = el("div", "izItem"), top = el("div", "it");
+    top.appendChild(el("b", "", x.nama));
+    top.appendChild(menunggu ? el("span", "izJ", (EJ[x.jenis] || "") + " " + x.jenis) : lencana(x.status));
+    it.appendChild(top);
+    it.appendChild(el("small", "", "Kelas " + x.kelas + " · " + (menunggu ? "" : (EJ[x.jenis] || "") + " " + x.jenis + " · ") + tglPanjang(x.tanggal)));
+    it.appendChild(el("div", "ia", x.alasan));
+    if(menunggu) it.appendChild(el("small", "", "Diajukan " + x.diajukan));
+    else if(x.oleh) it.appendChild(el("small", "", x.status + " oleh " + x.oleh + (x.pada ? " · " + x.pada : "")));
+    return it;
+  }
+  function muatKIzin(){
+    ambil("getIzinKepsek", { token:K.token, kelas:$("kzKelas").value }, $("kzMsg"), function(r){
+      var w = $("kzWait"), d = $("kzDone"); w.innerHTML = ""; d.innerHTML = "";
+      $("kzInfo").textContent = r.menunggu.length ? r.menunggu.length + " pengajuan menunggu persetujuan guru." : "Tidak ada pengajuan yang menunggu.";
+      if(!r.menunggu.length) w.appendChild(el("div", "izKosong", "Semua pengajuan sudah diproses."));
+      r.menunggu.forEach(function(x){ w.appendChild(itemK(x, true)); });
+      if(!r.riwayat.length) d.appendChild(el("div", "izKosong", "Belum ada riwayat."));
+      r.riwayat.forEach(function(x){ d.appendChild(itemK(x, false)); });
+    }, logout);
+  }
+  $("kzKelas").onchange = muatKIzin;
+
+  // menu kepala sekolah: Izin dan Info
+  var _goK = goK;
+  goK = function(k){
+    if(k === "kz"){ isiKelasZ(); show("vKIzin"); muatKIzin(); return; }
+    if(k === "ki"){ show("vKInfo"); return; }
+    _goK(k);
+  };
+
+  // ----- ringkasan izin & sakit per murid dalam satu bulan -----
+  function tampilRingkas(r, ringkas, list, bukaMurid){
+    ringkas.className = "b";
+    ringkas.textContent = "📝 " + namaBulan(r.bulan) + " · Kelas " + r.kelas + " · " + r.list.length + " dari " + r.jumlahMurid +
+      " murid pernah izin/sakit (total Izin " + r.totalIzin + " hari, Sakit " + r.totalSakit + " hari)";
+    list.innerHTML = "";
+    if(!r.list.length){ list.textContent = "Tidak ada murid yang izin atau sakit pada bulan ini. 🎉"; return; }
+    r.list.forEach(function(x){
+      var row = el("div", "siswa"), nm = el("div", "nm");
+      nm.appendChild(document.createTextNode(x.nama));
+      nm.appendChild(el("small", "", "Izin " + x.izin + " hari · Sakit " + x.sakit + " hari · ketuk untuk detail"));
+      var pil = el("span", "pil" + (x.total >= SERING ? " bl" : ""), x.total + " hari");
+      if(x.total < SERING){ pil.style.background = "var(--field)"; pil.style.color = "var(--ink2)"; }
+      row.style.cursor = "pointer"; row.title = "Ketuk untuk melihat kalender kehadiran";
+      row.onclick = function(){ bukaMurid(x.nama); };
+      row.appendChild(nm); row.appendChild(pil); list.appendChild(row);
+    });
+  }
+
+  // guru: halaman Rekap Siswa
+  var gref = document.querySelector('#vRekap button[onclick="muatRekap()"]');
+  if(gref){
+    var gb = el("button", "gray", "📝 Izin & Sakit Bulan Ini"); gb.type = "button";
+    gref.parentNode.appendChild(gb);
+    gb.onclick = function(){
+      var b = $("rkBulan").value;
+      if(!b){ say($("rkMsg"), "Pilih bulan.", "err"); return; }
+      $("rkRingkas").textContent = ""; $("rkList").innerHTML = "";
+      ambil("ringkasIzinBulan", { token:S.token, bulan:b }, $("rkMsg"), function(r){
+        tampilRingkas(r, $("rkRingkas"), $("rkList"), function(nama){
+          $("rkSiswa").value = nama; if($("rkSiswa").value !== nama) return;
+          muatRekap(); $("rkRingkas").scrollIntoView({ behavior:"smooth", block:"start" });
+        });
+      }, logout);
+    };
+  }
+
+  // kepala sekolah: halaman Rekap Siswa (kelas yang sedang dipilih)
+  var kmsg = $("krMsg");
+  if(kmsg){
+    var kb = el("button", "gray", "📝 Izin & Sakit Bulan Ini"); kb.type = "button";
+    kmsg.parentNode.insertBefore(kb, kmsg);
+    kb.onclick = function(){
+      var k = K.kelas[Number($("krKelas").value)], b = $("krBulan").value;
+      if(!k || !b){ say($("krMsg"), "Pilih kelas dan bulan.", "err"); return; }
+      $("krRingkas").textContent = ""; $("krList").innerHTML = "";
+      ambil("ringkasIzinBulan", { token:K.token, kelas:k.kelas, bulan:b }, $("krMsg"), function(r){
+        tampilRingkas(r, $("krRingkas"), $("krList"), function(nama){
+          $("krSiswa").value = nama; if($("krSiswa").value !== nama) return;
+          muatKRekap(); $("krRingkas").scrollIntoView({ behavior:"smooth", block:"start" });
+        });
+      }, logout);
+    };
+  }
 })();
 
 // sesi yang dipulihkan saat refresh
