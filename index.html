@@ -1543,7 +1543,7 @@ body.app #vKepsek #kList{flex:0 1 auto}
 #vWIzin:not(.hidden),#vIzinG:not(.hidden){max-height:calc(100vh - 104px);max-height:calc(100dvh - 104px);overflow-y:auto}
 @media (max-width:899px){#vWIzin:not(.hidden),#vIzinG:not(.hidden){max-height:none;overflow:visible}}
 @media (min-width:900px){body.app #vWIzin,body.app #vIzinG{max-width:620px;width:100%;margin-left:auto;margin-right:auto}}
-/* ===== v16: libur mendadak & pengumuman ===== */
+/* ===== v16: libur insidental & pengumuman ===== */
 .infoW{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:18px;margin:0 0 10px;background:var(--brand-soft);color:var(--ink2)}
 .infoW .we{font-size:26px;line-height:1.1}
 .infoW b{display:block;font-size:15px;font-weight:800;line-height:1.25;color:var(--ink)}
@@ -3104,12 +3104,12 @@ function konfirmasi(teks, labelOk, fn){
   };
 })();
 
-// ---------- v16: libur mendadak & pengumuman dari guru, tampil di beranda wali ----------
+// ---------- v16: libur insidental & pengumuman dari guru, tampil di beranda wali ----------
 (function(){
-  var INFO = [], INFO_T = 0, INFO_TOK = "", INFO_P = null, JENIS_INFO = "Libur mendadak", UNTUK_INFO = "kelas", EDIT = null;
+  var INFO = [], INFO_T = 0, INFO_TOK = "", INFO_P = null, JENIS_INFO = "Libur Insidental", UNTUK_INFO = "kelas", EDIT = null;
   function el(tag, cls, teks){ var e = document.createElement(tag); if(cls) e.className = cls; if(teks !== undefined) e.textContent = teks; return e; }
   function tglRentang(i){ return i.sampai !== i.mulai ? tglIndo(i.mulai) + " – " + tglIndo(i.sampai) : tglIndo(i.mulai) + " " + i.mulai.substring(0, 4); }
-  var IKON = { "Libur mendadak":"🚨", "Pulang cepat":"⏰", "Pengumuman":"📢" };
+  var IKON = { "Libur Insidental":"🚨", "Pulang cepat":"⏰", "Pengumuman":"📢" };
   function judulInfo(i){ return i.jenis + (i.jenis === "Pulang cepat" && i.jam ? " · pukul " + i.jam.replace(":", ".") : ""); }
 
   // ----- ambil data (wali atau guru, sesuai yang sedang masuk) -----
@@ -3132,12 +3132,12 @@ function konfirmasi(teks, labelOk, fn){
     return INFO_P;
   }
 
-  // libur mendadak ikut masuk daftar libur + penanda kalender (tanpa mengubah sheet "Hari Libur")
+  // libur insidental ikut masuk daftar libur + penanda kalender (tanpa mengubah sheet "Hari Libur")
   function gabungInfoKeLibur(){
     if(!LIBUR) return;
     LIBUR = LIBUR.filter(function(x){ return !x.info; });
     INFO.forEach(function(i){
-      if(i.jenis === "Libur mendadak") LIBUR.push({ mulai:i.mulai, selesai:i.sampai, ket:i.ket, jenis:"Libur mendadak", info:true });
+      if(i.jenis === "Libur Insidental") LIBUR.push({ mulai:i.mulai, selesai:i.sampai, ket:i.ket, jenis:"Libur Insidental", info:true });
     });
     LIBUR.sort(function(x, y){ return x.mulai < y.mulai ? -1 : x.mulai > y.mulai ? 1 : 0; });
     LIBURMAP = {};
@@ -3164,7 +3164,7 @@ function konfirmasi(teks, labelOk, fn){
     var today = wibSekarang().tgl;
     INFO.slice(0, 5).forEach(function(i){
       var kini = i.mulai <= today && i.sampai >= today;
-      var cls = i.jenis === "Libur mendadak" ? " lm" : i.jenis === "Pulang cepat" ? " pc" : "";
+      var cls = i.jenis === "Libur Insidental" ? " lm" : i.jenis === "Pulang cepat" ? " pc" : "";
       var k = el("div", "infoW" + cls), tx = el("span");
       tx.appendChild(el("b", "", (kini ? "Hari ini · " : "") + judulInfo(i)));
       if(i.ket) tx.appendChild(el("div", "it2", i.ket));
@@ -3178,7 +3178,7 @@ function konfirmasi(teks, labelOk, fn){
   h3.textContent = "📅 Libur & Pengumuman";
   var ib = el("div"); ib.id = "infoBox";
   ib.innerHTML = '<h4>Umumkan ke wali murid</h4>' +
-    '<div id="inEditInfo" class="b" style="display:none"></div><div class="row" id="inJenisRow"><button type="button" class="seg" data-ij="Libur mendadak">🚨 Libur mendadak</button><button type="button" class="seg" data-ij="Pulang cepat">⏰ Pulang cepat</button><button type="button" class="seg" data-ij="Pengumuman">📢 Pengumuman</button></div>' +
+    '<div id="inEditInfo" class="b" style="display:none"></div><div class="row" id="inJenisRow"><button type="button" class="seg" data-ij="Libur Insidental">🚨 Libur Insidental</button><button type="button" class="seg" data-ij="Pulang cepat">⏰ Pulang cepat</button><button type="button" class="seg" data-ij="Pengumuman">📢 Pengumuman</button></div>' +
     '<label class="izl" for="inMulai">Tanggal mulai</label>' +
     '<div class="chips"><button type="button" class="chip" data-hr="0">Hari ini</button><button type="button" class="chip" data-hr="1">Besok</button><button type="button" class="chip" data-hr="2">Lusa</button></div><input type="date" id="inMulai">' +
     '<label class="izl" for="inSampai">Sampai tanggal (kosongkan bila 1 hari)</label><input type="date" id="inSampai">' +
@@ -3193,7 +3193,7 @@ function konfirmasi(teks, labelOk, fn){
 
   // v17: kepala sekolah memakai form yang sama di halaman Info miliknya (formnya dipindah saat halaman dibuka)
   var vki = el("div", "card hidden"); vki.id = "vKInfo";
-  vki.innerHTML = '<h3>📢 Pengumuman Sekolah</h3><div class="b">Libur mendadak, pulang cepat, atau pengumuman untuk wali murid: semua kelas atau satu kelas saja.</div>';
+  vki.innerHTML = '<h3>📢 Pengumuman Sekolah</h3><div class="b">Libur Insidental, pulang cepat, atau pengumuman untuk wali murid: semua kelas atau satu kelas saja.</div>';
   $("vLibur").parentNode.insertBefore(vki, $("vLibur"));
   VIEWS.push("vKInfo"); KPETA.vKInfo = "ki";
 
@@ -3256,7 +3256,7 @@ function konfirmasi(teks, labelOk, fn){
     var kp = NAVROLE === "kepsek";
     mx.setUTCDate(mx.getUTCDate() + 60);
     a.min = n; a.max = kunciDari(mx); b.min = n; b.max = kunciDari(mx);
-    if(EDIT){ EDIT = null; $("inKet").value = ""; a.value = ""; b.value = ""; JENIS_INFO = "Libur mendadak"; setJam("10:00"); }
+    if(EDIT){ EDIT = null; $("inKet").value = ""; a.value = ""; b.value = ""; JENIS_INFO = "Libur Insidental"; setJam("10:00"); }
     if(!a.value || a.value < n) a.value = n;
     UNTUK_INFO = kp ? "semua" : "kelas";   // "Semua kelas" hanya untuk kepala sekolah
     $("inUntukRow").style.display = kp ? "" : "none";
@@ -3270,7 +3270,7 @@ function konfirmasi(teks, labelOk, fn){
     var n = wibSekarang().tgl;
     EDIT = null; $("inKet").value = ""; $("inSampai").value = "";
     $("inMulai").min = n; $("inSampai").min = n; $("inMulai").value = n;
-    JENIS_INFO = "Libur mendadak"; setJam("10:00"); tandaiInfo(); tandaiTgl();
+    JENIS_INFO = "Libur Insidental"; setJam("10:00"); tandaiInfo(); tandaiTgl();
   }
   function mulaiUbah(i){
     var n = wibSekarang().tgl, a = $("inMulai"), b = $("inSampai");
