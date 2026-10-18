@@ -389,8 +389,8 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "4.0.0";
-var APP_TGL = "18 Oktober 2026";
+var APP_VERSI = "4.1.0";
+var APP_TGL = "19 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
 var FACEAPI_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js";
@@ -1416,6 +1416,34 @@ body.gelap #lbInfo{background:rgba(255,176,32,.14);color:#ffcf70}
   body.app #vKSet,body.app #vRiwayat{max-width:620px;width:100%;margin-left:auto;margin-right:auto}
   body.app #vKSet:not(.hidden),body.app #vRiwayat:not(.hidden){max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);overflow-y:auto}
   body.app #vKepsek:not(.hidden),body.app #vKRekap:not(.hidden){max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px)}
+}
+</style>
+<style>
+/* ===== v18: Rekap Siswa kepala sekolah di laptop (sama seperti guru): kontrol di kiri, hasil di kanan ===== */
+@media (min-width:900px){
+  body.app #vKRekap .rkSide,body.app #vKRekap .rkMain{display:block}
+  body.app .wrap:has(#vKRekap:not(.hidden)){max-width:1180px}
+  body.app #vKRekap{max-width:none;width:100%}
+  body.app #vKRekap:not(.hidden){display:grid;grid-template-columns:300px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;
+    column-gap:28px;height:calc(100vh - 48px);height:calc(100dvh - 48px);max-height:none;padding:24px 28px}
+  body.app #vKRekap > h3{grid-column:1 / -1;margin-bottom:14px}
+  body.app #vKRekap .rkSide{grid-column:1;grid-row:2;min-height:0;overflow-y:auto;padding:2px 6px 8px 2px}
+  body.app #vKRekap .rkMain{grid-column:2;grid-row:2;min-height:0;overflow-y:auto;padding:0 6px 8px 28px;border-left:1px solid var(--line)}
+  body.app #vKRekap > button.gray{grid-column:1;grid-row:3;margin-top:8px}
+  body.app #vKRekap .rkSide select.full{margin-bottom:8px}
+  body.app #vKRekap .rkSide button{margin-top:8px;padding:12px 16px;font-size:14px}
+  body.app #vKRekap .rkSide .perBar{flex-direction:column;gap:8px;margin-top:8px}
+  body.app #vKRekap .rkSide .perBar select{width:100%;flex:none;margin:0}
+  body.app #vKRekap #krList{max-height:none;overflow:visible}
+  body.app #vKRekap .rkMain .kHero{margin-top:0}
+  body.app #vKRekap #krList:empty::before{content:"Pilih kelas, murid, dan bulan di sebelah kiri, lalu klik Tampilkan.";display:block;margin-top:14px;color:var(--muted);font-weight:600;font-size:14px}
+  #krList .rkWrap{display:block;margin-top:16px}
+  #krList .rkCal{max-width:none}
+  #krList .rkCal .kal{gap:8px;margin-top:0}
+  #krList .rkCal .kal .kc{aspect-ratio:auto;height:46px;border-radius:14px;font-size:14px}
+  #krList .rkHist{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));column-gap:12px}
+  #krList .rkHist h4{display:block;grid-column:1 / -1;margin:0 0 8px;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+  #krList .rkHist .siswa{break-inside:avoid}
 }
 </style>
 <style>
@@ -3578,6 +3606,20 @@ function konfirmasi(teks, labelOk, fn){
       }, logout);
     };
   }
+})();
+
+// ---------- v18: Rekap Siswa kepala sekolah jadi dua kolom di laptop (sama seperti guru) ----------
+// Harus berada SETELAH semua tombol tambahan kepala sekolah dibuat (Tabel Kelas, Rekap Semester, Kehadiran Rendah, Izin & Sakit)
+(function(){
+  var rk = $("vKRekap"), h3 = rk && rk.querySelector("h3"); if(!rk || !h3) return;
+  var side = document.createElement("div"); side.className = "rkSide";
+  var main = document.createElement("div"); main.className = "rkMain";
+  var kembali = rk.lastElementChild;
+  Array.prototype.slice.call(rk.children).forEach(function(el){
+    if(el === h3 || el === kembali) return;
+    (el.id === "krMsg" || el.id === "krRingkas" || el.id === "krList" ? main : side).appendChild(el);
+  });
+  rk.insertBefore(side, kembali); rk.insertBefore(main, kembali);
 })();
 
 // sesi yang dipulihkan saat refresh
