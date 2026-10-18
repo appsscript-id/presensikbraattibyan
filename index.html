@@ -389,7 +389,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "3.9.0";
+var APP_VERSI = "4.0.0";
 var APP_TGL = "18 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
@@ -3169,6 +3169,21 @@ function konfirmasi(teks, labelOk, fn){
       tx.appendChild(el("b", "", (kini ? "Hari ini · " : "") + judulInfo(i)));
       if(i.ket) tx.appendChild(el("div", "it2", i.ket));
       tx.appendChild(el("small", "", tglRentang(i)));
+      if(i.sudah){
+        tx.appendChild(el("small", "", "✅ Anda sudah menjawab: Iya Ustadzah"));
+      } else {
+        var bb = el("button", "gray", "✅ Iya Ustadzah"); bb.type = "button";
+        bb.style.cssText = "width:auto;margin-top:8px;padding:9px 18px;font-size:13.5px;background:var(--card)";
+        bb.onclick = function(){
+          bb.disabled = true; bb.textContent = "Mengirim...";
+          api("balasInfo", { token:W.token, id:i.id }).then(function(r){
+            if(sesiHabis(r)){ keluarWali(r.message); return; }
+            if(!r || r.status !== "success"){ bb.disabled = false; bb.textContent = "⚠️ Gagal, ketuk lagi"; return; }
+            i.sudah = true; gambarInfoWali();
+          }).catch(function(){ bb.disabled = false; bb.textContent = "⚠️ Gagal, ketuk lagi"; });
+        };
+        tx.appendChild(bb);
+      }
       k.appendChild(el("span", "we", IKON[i.jenis] || "📢")); k.appendChild(tx); cw.appendChild(k);
     });
   }
@@ -3336,6 +3351,22 @@ function konfirmasi(teks, labelOk, fn){
       it.appendChild(top);
       if(i.ket) it.appendChild(el("div", "ia", i.ket));
       it.appendChild(el("small", "", tglRentang(i) + (i.oleh ? " · " + i.oleh : "")));
+      if(i.total !== undefined){
+        var rb = el("small", "", "✅ Iya Ustadzah: " + i.baca + " dari " + i.total + " wali" + (i.total && i.baca === i.total ? " 🎉" : ""));
+        it.appendChild(rb);
+        if(i.total > 0){
+          var dt = el("div", "ia"); dt.style.display = "none";
+          dt.appendChild(el("div", "", "Sudah: " + (i.sudahNama.length ? i.sudahNama.join(", ") : "-")));
+          dt.appendChild(el("div", "", "Belum: " + (i.belumNama.length ? i.belumNama.join(", ") : "-")));
+          var bl = el("button", "gray", "👀 Lihat nama"); bl.type = "button"; bl.style.marginRight = "8px";
+          bl.onclick = function(){
+            var buka = dt.style.display === "none";
+            dt.style.display = buka ? "" : "none";
+            bl.textContent = buka ? "🙈 Tutup nama" : "👀 Lihat nama";
+          };
+          it.appendChild(bl); it.appendChild(dt);
+        }
+      }
       if(i.milikku){
         var bu = el("button", "gray", "✏️ Ubah"); bu.type = "button"; bu.style.marginRight = "8px";
         bu.onclick = function(){ mulaiUbah(i); };
