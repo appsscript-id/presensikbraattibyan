@@ -1,6 +1,6 @@
 // Service worker Presensi KB RA At Tibyan
 // Naikkan angka versi (absen-v2, v3, ...) bila ingin memaksa HP mengambil file baru.
-var CACHE = "absen-v2";
+var CACHE = "absen-v3";
 var FILES = [
   "./", "./index.html", "./manifest.json", "./logo.png",
   "./icon-192.png", "./icon-512.png", "./bunyi.mp3", "./masuk.mp3", "./salam.mp3"
@@ -37,6 +37,41 @@ self.addEventListener("fetch", function (e) {
       return res;
     }).catch(function () {
       return caches.match(req).then(function (hit) { return hit || caches.match("./index.html"); });
+    })
+  );
+});
+
+// ---------- NOTIFIKASI PUSH (pengingat murid belum diabsen) ----------
+// Server (Apps Script) mengirim pesan data-saja lewat FCM: { judul, isi, url }.
+// Bentuk payload dari FCM: { data: {...} } atau langsung objek datar; keduanya ditangani.
+self.addEventListener("push", function (e) {
+  var d = {};
+  try {
+    var j = e.data ? e.data.json() : {};
+    d = (j && j.data) || (j && j.notification) || j || {};
+  } catch (err) {
+    try { d = { isi: e.data.text() }; } catch (e2) {}
+  }
+  var judul = d.judul || d.title || "Presensi KB RA At Tibyan";
+  e.waitUntil(self.registration.showNotification(judul, {
+    body: d.isi || d.body || "",
+    icon: "./icon-192.png",
+    badge: "./icon-192.png",
+    tag: d.tag || "absen-pengingat",   // notifikasi baru menggantikan yang lama, tidak menumpuk
+    renotify: true,
+    data: { url: d.url || "./index.html" }
+  }));
+});
+
+self.addEventListener("notificationclick", function (e) {
+  e.notification.close();
+  var tujuan = new URL((e.notification.data && e.notification.data.url) || "./index.html", self.location.href).href;
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].url.indexOf(self.registration.scope) === 0 && "focus" in list[i]) return list[i].focus();
+      }
+      return self.clients.openWindow(tujuan);
     })
   );
 });
