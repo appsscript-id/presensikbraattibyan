@@ -796,13 +796,21 @@ function renderSiswa(){
 }
 function setSemua(st){ S.siswa.forEach(function(x){ x.nilai = st; if(x.el) x.el.value = st; }); }
 function simpanManual(){
-  var rec = S.siswa.filter(function(x){ return x.nilai; }).map(function(x){ return { nama:x.nama, status:x.nilai }; });
-  if(!rec.length){ say($("dashMsg"), "Pilih status minimal satu siswa.", "err"); return; }
+  // yang sudah tercatat Hadir (jam sudah ada) tidak ikut disimpan ulang; kembalikan pilihannya ke status tersimpan
+  var lewat = 0;
+  S.siswa.forEach(function(x){ if(x.status === "Hadir" && x.nilai){ lewat++; x.nilai = "Hadir"; if(x.el) x.el.value = "Hadir"; } });
+  var rec = S.siswa.filter(function(x){ return x.nilai && x.status !== "Hadir"; }).map(function(x){ return { nama:x.nama, status:x.nilai }; });
+  if(!rec.length){
+    say($("dashMsg"), lewat ? "Tidak ada yang perlu disimpan. Yang sudah hadir tidak diperbarui." : "Pilih status minimal satu siswa.", lewat ? "info" : "err");
+    return;
+  }
   unlockSuara(); say($("dashMsg"), "Menyimpan...", "info");
-  api("simpanAbsen", { token:S.token, records:rec, skipJikaAda:false }).then(function(r){
+  api("simpanAbsen", { token:S.token, records:rec, skipJikaAda:false, lewatiHadir:true }).then(function(r){
     if(sesiHabis(r)){ logout(r.message); return; }
+    if(r.status === "warning"){ say($("dashMsg"), r.message, "info"); return; }
     if(r.status !== "success"){ say($("dashMsg"), r.message, "err"); return; }
-    say($("dashMsg"), r.message, "ok");
+    var nSudah = (r.sudah || []).length + lewat;
+    say($("dashMsg"), r.message + (nSudah ? " " + nSudah + " siswa yang sudah hadir tidak diperbarui." : ""), "ok");
     S.lastUcapan = susunUcapan(r); $("btnUlang").style.display = "block"; bicara(S.lastUcapan);
     r.hasil.forEach(function(h){ S.siswa.forEach(function(x){ if(x.nama === h.nama){ x.status = h.status; x.nilai = h.status; } }); });
     renderSiswa();
