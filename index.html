@@ -389,8 +389,8 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
 var API_URL = "https://script.google.com/macros/s/AKfycbznT8VEioSTTe-eWNXK4nZnHYmcagzIFyznkV1hss4T3YuIwjPGX1EClO3J4B-1Pk2QaA/exec";
 // =====================================================================
  
-var APP_VERSI = "4.1.0";
-var APP_TGL = "19 Oktober 2026";
+var APP_VERSI = "4.2.0";
+var APP_TGL = "21 Oktober 2026";
 
 var MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
 var FACEAPI_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js";
@@ -3682,6 +3682,128 @@ window.PWA = (function(){
       return Promise.resolve(ios() ? "ios" : "manual");
     }
   };
+})();
+</script>
+<script>
+// ---------- NOTIFIKASI PUSH (pengingat murid belum diabsen pukul 08.30, khusus guru) ----------
+// Isi konfigurasi Firebase dari: Firebase Console > Project settings > General > Your apps (Web app),
+// dan VAPID dari: Project settings > Cloud Messaging > Web Push certificates > Key pair.
+(function(){
+  var FB_CONFIG = {
+    apiKey: "AIzaSyBTfrggBVOxvRHgGPP0sha1lwKqIQ70EtA",
+    authDomain: "presensi-attibyan.firebaseapp.com",
+    projectId: "presensi-attibyan",
+    messagingSenderId: "310874412636",
+    appId: "1:310874412636:web:c18e420feb11bfc8e0b899"
+  };
+  var FB_VAPID = "BAJYyfrlUA1O7LS2So0KSJeJlLCq4qH7EBRUXxb_Jd2i4HG_e0jn8K-VN7vHiwh7m44mzXBNl5r01dl0iQqost8";
+  var FB_VER = "10.14.1";
+
+  var vs = document.getElementById("vSet");
+  if(!vs) return;
+  var h4s = vs.querySelectorAll("h4"), sisip = null;
+  for(var i = 0; i < h4s.length; i++){ if(h4s[i].textContent === "Aplikasi"){ sisip = h4s[i]; break; } }
+  var h = document.createElement("h4"); h.textContent = "Notifikasi pengingat";
+  var tombol = document.createElement("button"); tombol.type = "button"; tombol.className = "gray"; tombol.id = "setNotif";
+  var tes = document.createElement("button"); tes.type = "button"; tes.className = "gray"; tes.id = "setNotifTes"; tes.textContent = "🔔 Kirim Notifikasi Percobaan";
+  var info = document.createElement("div"); info.id = "notifInfo"; info.className = "msg";
+  [h, tombol, tes, info].forEach(function(el){ vs.insertBefore(el, sisip); });
+
+  var KUNCI = "pushAktif", msgObj = null, sudahInit = false, sesiDisegarkan = "";
+  function aktifLokal(){ try{ return localStorage.getItem(KUNCI) === "1"; }catch(e){ return false; } }
+  function setLokal(v){ try{ if(v) localStorage.setItem(KUNCI, "1"); else localStorage.removeItem(KUNCI); }catch(e){} }
+  function didukung(){ return ("Notification" in window) && ("serviceWorker" in navigator) && ("PushManager" in window); }
+  function terkonfigurasi(){ return FB_CONFIG.apiKey.indexOf("ISI_") !== 0 && FB_VAPID.indexOf("ISI_") !== 0; }
+
+  function muatSkrip(src){
+    return new Promise(function(ok, gagal){
+      var s = document.createElement("script"); s.src = src; s.onload = ok;
+      s.onerror = function(){ gagal(new Error("Gagal memuat " + src)); };
+      document.head.appendChild(s);
+    });
+  }
+  function siapFirebase(){
+    if(sudahInit) return Promise.resolve();
+    var base = "https://www.gstatic.com/firebasejs/" + FB_VER + "/";
+    return muatSkrip(base + "firebase-app-compat.js").then(function(){ return muatSkrip(base + "firebase-messaging-compat.js"); }).then(function(){
+      if(!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+      msgObj = firebase.messaging(); sudahInit = true;
+    });
+  }
+  function ambilToken(){
+    return siapFirebase().then(function(){ return navigator.serviceWorker.ready; }).then(function(reg){
+      return msgObj.getToken({ vapidKey: FB_VAPID, serviceWorkerRegistration: reg });
+    });
+  }
+  function kirimKeServer(tokenPush){
+    return api("simpanTokenPush", { token: S.token, pushToken: tokenPush });
+  }
+  function tampil(){
+    var on = didukung() && Notification.permission === "granted" && aktifLokal();
+    tombol.textContent = on ? "🔕 Matikan Notifikasi" : "🔔 Aktifkan Notifikasi";
+    tes.style.display = on ? "" : "none";
+    tombol.setAttribute("data-on", on ? "1" : "");
+    if(!didukung()){
+      say(info, /iphone|ipad|ipod/i.test(navigator.userAgent) ?
+        "Di iPhone/iPad, notifikasi hanya bisa bila aplikasi sudah dipasang ke Layar Utama (iOS 16.4 ke atas). Pasang dulu lewat Safari: Bagikan > Tambahkan ke Layar Utama, lalu buka dari ikon." :
+        "Browser ini belum mendukung notifikasi.", "info");
+    } else if(Notification.permission === "denied"){
+      say(info, "Notifikasi diblokir di pengaturan browser/HP. Izinkan dulu notifikasi untuk situs ini, lalu coba lagi.", "err");
+    } else if(on){
+      say(info, "Aktif di perangkat ini. Anda akan diingatkan sekitar pukul 08.30 bila ada murid yang belum diabsen.", "ok");
+    } else {
+      say(info, "Dapatkan pengingat di HP sekitar pukul 08.30 walau aplikasi tidak dibuka.", "info");
+    }
+  }
+
+  function aktifkan(){
+    if(!didukung()){ tampil(); return; }
+    if(!terkonfigurasi()){ say(info, "Konfigurasi Firebase di index.html belum diisi.", "err"); return; }
+    tombol.disabled = true; say(info, "Meminta izin notifikasi...", "info");
+    Notification.requestPermission().then(function(izin){
+      if(izin !== "granted") throw new Error("Izin notifikasi tidak diberikan.");
+      say(info, "Mendaftarkan perangkat...", "info");
+      return ambilToken();
+    }).then(function(t){
+      if(!t) throw new Error("Token notifikasi kosong.");
+      return kirimKeServer(t);
+    }).then(function(r){
+      if(sesiHabis(r)){ logout(r.message); return; }
+      if(!r || r.status !== "success") throw new Error((r && r.message) || "Gagal menyimpan ke server.");
+      setLokal(true); sesiDisegarkan = S.token; tampil();
+    }).catch(function(e){ say(info, "Gagal mengaktifkan: " + (e && e.message ? e.message : e), "err"); })
+      .then(function(){ tombol.disabled = false; });
+  }
+  function matikan(){
+    tombol.disabled = true; say(info, "Mematikan...", "info");
+    ambilToken().then(function(t){
+      return Promise.all([
+        api("hapusTokenPush", { token: S.token, pushToken: t }).catch(function(){}),
+        msgObj.deleteToken().catch(function(){})
+      ]);
+    }).catch(function(){}).then(function(){ setLokal(false); sesiDisegarkan = ""; tombol.disabled = false; tampil(); });
+  }
+  tombol.onclick = function(){ if(tombol.getAttribute("data-on") === "1") matikan(); else aktifkan(); };
+  tes.onclick = function(){
+    tes.disabled = true; say(info, "Mengirim notifikasi percobaan...", "info");
+    api("tesPush", { token: S.token }).then(function(r){
+      if(sesiHabis(r)){ logout(r.message); return; }
+      say(info, (r && r.message) || "Selesai.", r && r.status === "success" ? "ok" : "err");
+    }).catch(function(e){ say(info, galat(e), "err"); }).then(function(){ tes.disabled = false; });
+  };
+
+  // tiap guru masuk: perbarui token di server (supaya terikat ke akun yang sedang login, dan token tetap segar)
+  function segarkan(){
+    if(!S.token || sesiDisegarkan === S.token) return;
+    if(!didukung() || !terkonfigurasi() || !aktifLokal() || Notification.permission !== "granted") return;
+    sesiDisegarkan = S.token;
+    ambilToken().then(function(t){ return t ? kirimKeServer(t) : null; }).catch(function(){ sesiDisegarkan = ""; });
+  }
+  var _isiSet = window.isiSet;
+  if(typeof _isiSet === "function") window.isiSet = function(){ _isiSet.apply(this, arguments); tampil(); };
+  var _openDash = window.openDash;
+  if(typeof _openDash === "function") window.openDash = function(){ var r = _openDash.apply(this, arguments); segarkan(); return r; };
+  tampil();
 })();
 </script>
 <script>
