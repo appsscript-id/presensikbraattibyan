@@ -1,0 +1,112 @@
+/* ===== TAMPILAN v4.4 : 6 gaya, dipilih di menu Pengaturan (guru, kepala sekolah, wali murid) ===== */
+body{--sh:0 8px 22px -12px rgba(47,125,246,.28);--rad:26px;--rs:22px;--cbd:0;--hi:#fff;--hp:rgba(255,255,255,.22);
+  --hbtn:#fff;--hbc:var(--brand);--m1:"🐥";--m2:"🦉";--m3:"🐻";
+  --hb:radial-gradient(110px 60px at 72% 20%,rgba(255,255,255,.3),transparent 70%),radial-gradient(150px 70px at 96% 85%,rgba(255,255,255,.22),transparent 70%),linear-gradient(120deg,var(--g1),var(--g2))}
+body:not(.gelap){--bg:#f1f6ff}
+
+/* 2 Permen */
+body[data-gaya="2"]{--brand:#e5508a!important;--brand-dark:#c93d74!important;--g1:#ff7eb3!important;--g2:#ffb199!important;
+  --rad:34px;--rs:26px;--sh:0 10px 24px -14px rgba(229,80,138,.5);--m1:"🦄";--m2:"🦋";--m3:"🐰";
+  --hb:radial-gradient(circle at 12px 12px,rgba(255,255,255,.4) 3px,transparent 4px) 0 0/26px 26px,linear-gradient(120deg,#ff7eb3,#ffb199)}
+body[data-gaya="2"]:not(.gelap){--bg:#fff4f8;--brand-soft:#ffe6ef!important}
+/* 3 Hutan */
+body[data-gaya="3"]{--brand:#16a679!important;--brand-dark:#0f8a63!important;--g1:#0f8a63!important;--g2:#3cc79b!important;
+  --rad:18px;--rs:16px;--cbd:2px solid var(--line);--sh:none;--m1:"🦉";--m2:"🐼";--m3:"🦊";
+  --hb:repeating-linear-gradient(135deg,rgba(255,255,255,.12) 0 14px,transparent 14px 28px),linear-gradient(120deg,#0f8a63,#3cc79b)}
+body[data-gaya="3"]:not(.gelap){--bg:#f0f8f4;--brand-soft:#e0f5ea!important}
+/* 4 Samudra */
+body[data-gaya="4"]{--brand:#1565c0!important;--brand-dark:#0d47a1!important;--g1:#0b2f6b!important;--g2:#1e73d8!important;
+  --rad:24px;--rs:20px;--sh:0 12px 26px -16px rgba(11,47,107,.55);--m1:"🐬";--m2:"🐳";--m3:"🐙";
+  --hb:radial-gradient(circle at 86% 125%,rgba(255,255,255,.25) 0 60px,transparent 61px),radial-gradient(circle at 60% 135%,rgba(255,255,255,.14) 0 85px,transparent 86px),linear-gradient(125deg,#0b2f6b,#1e73d8)}
+body[data-gaya="4"]:not(.gelap){--bg:#edf3fb;--brand-soft:#dfeafa!important}
+/* 5 Minimalis */
+body[data-gaya="5"]{--brand:#4f46e5!important;--brand-dark:#4338ca!important;--g1:#4f46e5!important;--g2:#7c75f0!important;
+  --rad:14px;--rs:12px;--cbd:1px solid var(--line);--sh:none;--m1:none;--m2:none;--m3:none;--hi:#1e1b4b;--hp:rgba(79,70,229,.12);
+  --hbtn:#4f46e5;--hbc:#fff;--hb:linear-gradient(135deg,#eceeff,#f7f8ff)}
+body[data-gaya="5"]:not(.gelap){--bg:#f7f8fc;--brand-soft:#eceeff!important}
+body.gelap[data-gaya="5"]{--hb:linear-gradient(135deg,#252c52,#1b2240);--hi:#e8eefb;--hp:rgba(255,255,255,.12)}
+/* 6 Matahari */
+body[data-gaya="6"]{--brand:#e07b0a!important;--brand-dark:#c46806!important;--g1:#f59e0b!important;--g2:#ffc94d!important;
+  --rad:28px;--rs:22px;--sh:0 10px 24px -14px rgba(224,123,10,.5);--m1:"🦁";--m2:"🐯";--m3:"🐵";--hi:#3a2200;--hp:rgba(255,255,255,.45);
+  --hbtn:#3a2200;--hbc:#fff;
+  --hb:repeating-conic-gradient(from 0deg at 90% 115%,rgba(255,255,255,.2) 0 10deg,transparent 10deg 20deg),linear-gradient(120deg,#f59e0b,#ffc94d)}
+body[data-gaya="6"]:not(.gelap){--bg:#fff8ea;--brand-soft:#ffefcf!important}
+
+/* ---------- dasar ---------- */
+.card{border:var(--cbd);border-radius:var(--rad);box-shadow:var(--sh)}
+
+/* ---------- kartu sapaan besar ---------- */
+body #vDash .head,body #vKepsek .head{position:relative;overflow:hidden;min-height:118px;border-radius:var(--rad);
+  padding:18px clamp(100px,30vw,190px) 18px 20px;background:var(--hb);color:var(--hi);box-shadow:var(--sh);border:var(--cbd)}
+body #vDash .head h2,body #vKepsek .head h2{display:inline-block;margin:0;padding:4px 11px;border-radius:99px;background:var(--hp);font-size:12.5px;font-weight:700}
+body .head h2+div{font-size:clamp(20px,5.6vw,28px);font-weight:800;line-height:1.2;margin:8px 0 4px;letter-spacing:-.4px}
+body .head h2+div+div{font-size:13px;font-weight:600;opacity:.95}
+body .head::before{right:14px;top:12px;bottom:auto;font-size:22px}
+body .head::after{display:block!important;content:var(--m1);position:absolute;left:auto;top:auto;right:14px;bottom:0;width:auto;height:auto;
+  border-radius:0;background:none;font-size:clamp(62px,18vw,96px);line-height:1;z-index:1;animation:fl 3.2s ease-in-out infinite}
+body #vKepsek .head::after{content:var(--m2)}
+.heroBtn{width:auto!important;margin:10px 0 0!important;padding:9px 18px!important;font-size:13.5px!important;
+  background:var(--hbtn)!important;color:var(--hbc)!important;position:relative;z-index:2}
+
+/* ---------- kartu ringkasan ---------- */
+#stat{gap:8px}
+#stat div{border-radius:var(--rs);padding:10px 2px 8px;box-shadow:none}
+#stat div::before{font-size:22px}
+#stat b{font-size:22px}
+#stat .c0{background:#e2f6ee}#stat .c1{background:#e5eeff}#stat .c2{background:#fff0d2}#stat .c3{background:#fde6e8}#stat .c4{background:var(--field)}
+#pers{background:var(--card);border:var(--cbd);border-radius:var(--rs);padding:12px 14px;box-shadow:var(--sh)}
+#pers .pt{font-size:13.5px;font-weight:800;color:var(--ink);margin-bottom:8px}
+#pers .pb i{background:var(--brand)}
+
+/* ---------- daftar murid ---------- */
+body #vDash #listSiswa .siswa{background:var(--card);border:1.5px solid var(--line);border-radius:var(--rs);padding:10px 12px;margin-bottom:8px}
+#listSiswa .siswa .ini{background:linear-gradient(135deg,var(--g1),var(--g2))}
+#listSiswa .siswa .fotoM{border-color:var(--brand-soft)}
+
+/* ---------- menu samping / bar bawah ---------- */
+#nav .nh{background:var(--brand-soft);border-radius:var(--rs);padding:10px;border-bottom:0;margin-bottom:10px}
+#nav .nb{border-radius:16px}
+#nav .nb.on{background:var(--brand-soft);color:var(--brand)}
+#nav .nb.on span{transform:translateY(-2px) scale(1.15)}
+@media (min-width:900px){#nav .nb.on{box-shadow:inset 4px 0 0 var(--brand)}}
+
+/* ---------- kepala sekolah ---------- */
+.kHero{background:linear-gradient(135deg,var(--brand-soft),var(--card));border:1.5px solid var(--line);border-radius:var(--rad)}
+.kSt div{border:0;border-radius:calc(var(--rs) - 6px)}
+.kSt .s0{background:#e2f6ee}.kSt .s1{background:#fff0d2}.kSt .s2{background:#e5eeff}.kSt .s3{background:#fde6e8}.kSt .s4{background:var(--field)}
+details.kc{background:var(--card);border:1.5px solid var(--line);border-radius:var(--rs)}
+details.kc[open]{border-color:var(--cb)}
+
+/* ---------- wali murid ---------- */
+body #vWaliHasil h3{position:relative;overflow:hidden;display:flex;align-items:center;min-height:98px;border-radius:var(--rad);
+  padding:18px clamp(96px,28vw,150px) 18px 20px;font-size:clamp(19px,5vw,24px);line-height:1.2;margin-bottom:12px;background:var(--hb);color:var(--hi)}
+body #vWaliHasil h3::after{content:var(--m3);position:absolute;right:14px;bottom:0;font-size:clamp(60px,17vw,88px);line-height:1;animation:fl 3.2s ease-in-out infinite}
+.wHari{padding:14px 16px;border-radius:var(--rs)}
+.wHari .we{font-size:36px}
+.wHari b{font-size:17px}
+.infoW{border-radius:var(--rs)}
+
+/* ---------- mode gelap ---------- */
+body.gelap #stat .c0,body.gelap #stat .c1,body.gelap #stat .c2,body.gelap #stat .c3,
+body.gelap .kSt .s0,body.gelap .kSt .s1,body.gelap .kSt .s2,body.gelap .kSt .s3{background:rgba(255,255,255,.07)}
+
+/* ---------- pilihan gaya di menu Pengaturan ---------- */
+.gyBox{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gyBtn{margin:0!important;width:auto!important;padding:8px 6px!important;display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:var(--field)!important;color:var(--ink)!important;box-shadow:none!important;border:2px solid transparent;border-radius:16px!important;font-size:12px!important}
+.gyBtn.on{border-color:var(--brand)}
+.gyPrev{display:block;width:100%;height:34px;border-radius:10px}
+
+/* ---------- laptop lebar: sapaan di atas, daftar murid kiri, ringkasan kanan ---------- */
+@media (min-width:1200px){
+  body.app .wrap:has(#vDash:not(.hidden)){max-width:1280px}
+  body.app #vDash:not(.hidden){display:grid!important;grid-template-columns:minmax(0,1fr) 330px;
+    grid-template-rows:auto auto auto auto minmax(0,1fr);column-gap:16px;row-gap:0}
+  body.app #vDash .head{grid-column:1/-1;grid-row:1}
+  body.app #vDash #ingat{grid-column:2;grid-row:2}
+  body.app #vDash #stat{grid-column:2;grid-row:3;grid-template-columns:1fr 1fr}
+  body.app #vDash #stat div:last-child{grid-column:1/-1}
+  body.app #vDash #pers{grid-column:2;grid-row:4}
+  body.app #vDash>.card{grid-column:1;grid-row:2/6;min-height:0}
+  body.app #vDash #listSiswa{grid-template-columns:1fr}
+}
