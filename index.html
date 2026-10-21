@@ -3688,7 +3688,7 @@ window.PWA = (function(){
 // ---------- NOTIFIKASI PUSH (pengingat murid belum diabsen pukul 08.30, khusus guru) ----------
 // Isi konfigurasi Firebase dari: Firebase Console > Project settings > General > Your apps (Web app),
 // dan VAPID dari: Project settings > Cloud Messaging > Web Push certificates > Key pair.
-(function(){
+function mulaiNotifPush(){
   var FB_CONFIG = {
     apiKey: "AIzaSyBTfrggBVOxvRHgGPP0sha1lwKqIQ70EtA",
     authDomain: "presensi-attibyan.firebaseapp.com",
@@ -3799,12 +3799,14 @@ window.PWA = (function(){
     sesiDisegarkan = S.token;
     ambilToken().then(function(t){ return t ? kirimKeServer(t) : null; }).catch(function(){ sesiDisegarkan = ""; });
   }
-  var _isiSet = window.isiSet;
-  if(typeof _isiSet === "function") window.isiSet = function(){ _isiSet.apply(this, arguments); tampil(); };
+  try{   // segarkan status tombol tiap menu Pengaturan dibuka
+    new MutationObserver(function(){ if(!vs.classList.contains("hidden")) tampil(); }).observe(vs, { attributes:true, attributeFilter:["class"] });
+  }catch(e){}
   var _openDash = window.openDash;
   if(typeof _openDash === "function") window.openDash = function(){ var r = _openDash.apply(this, arguments); segarkan(); return r; };
   tampil();
-})();
+}
+if(document.readyState === "complete") mulaiNotifPush(); else window.addEventListener("load", mulaiNotifPush);
 </script>
 <script>
 if ("serviceWorker" in navigator) {
