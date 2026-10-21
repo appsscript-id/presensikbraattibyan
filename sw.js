@@ -1,6 +1,6 @@
 // Service worker Presensi KB RA At Tibyan
 // Naikkan angka versi (absen-v2, v3, ...) bila ingin memaksa HP mengambil file baru.
-var CACHE = "absen-v3";
+var CACHE = "absen-v4";
 var FILES = [
   "./", "./index.html", "./manifest.json", "./logo.png",
   "./icon-192.png", "./icon-512.png", "./bunyi.mp3", "./masuk.mp3", "./salam.mp3"
@@ -59,6 +59,7 @@ self.addEventListener("push", function (e) {
     badge: "./icon-192.png",
     tag: d.tag || "absen-pengingat",   // notifikasi baru menggantikan yang lama, tidak menumpuk
     renotify: true,
+    vibrate: [400, 200, 400],          // getar 2 kali (Android)
     data: { url: d.url || "./index.html" }
   }));
 });
