@@ -16,7 +16,17 @@
     if(!hd || hd.querySelector(".heroBtn")) return;
     var b = document.createElement("button");
     b.type = "button"; b.className = "heroBtn"; b.textContent = "📸 Scan Wajah";
-    b.onclick = function(){ if(window.mulaiScan) mulaiScan(); };
+    b.onclick = function(){
+      if(b.disabled) return;
+      b.disabled = true; b.textContent = "⏳ Memuat...";
+      if(window.mulaiScan) mulaiScan();
+      var t0 = Date.now(), iv = setInterval(function(){
+        var vc = document.getElementById("vCam"), m = document.getElementById("dashMsg");
+        if((vc && !vc.classList.contains("hidden")) || (m && /err/.test(m.className)) || Date.now() - t0 > 20000){
+          clearInterval(iv); b.disabled = false; b.textContent = "📸 Scan Wajah";
+        }
+      }, 300);
+    };
     hd.appendChild(b);
   }
   function pilihanGaya(){
@@ -41,4 +51,35 @@
   });
   function mulai(){ try{ tombolScan(); pilihanGaya(); }catch(e){} }
   if(document.readyState === "complete") setTimeout(mulai, 0); else window.addEventListener("load", function(){ setTimeout(mulai, 0); });
+})();
+
+// Percepat Scan Wajah: data wajah diunduh diam-diam saat dashboard terbuka, lalu dipakai ulang (10 menit)
+(function(){
+  var cache = null, cacheT = 0, cacheTok = "", jalan = false, siap = false;
+  var asli = window.api;
+  if(typeof asli !== "function") return;
+  window.api = function(action, data){
+    if(action === "getWajah"){
+      var tok = data && data.token;
+      var segar = cache && cacheTok === tok && Date.now() - cacheT < 600000;
+      var p = asli(action, data).then(function(r){
+        if(r && r.status === "success"){ cache = r; cacheT = Date.now(); cacheTok = tok; }
+        return r;
+      });
+      if(segar){ p.catch(function(){}); return Promise.resolve(cache); }
+      return p;
+    }
+    if(action === "daftarWajahSiswa") cache = null;   // wajah baru didaftarkan: ambil ulang
+    return asli.apply(this, arguments);
+  };
+  setInterval(function(){
+    var S = window.S, vd = document.getElementById("vDash");
+    if(!S || !S.token || jalan || !vd || vd.classList.contains("hidden")) return;
+    if(cache && cacheTok === S.token){
+      if(!siap && window.muatModel && !(navigator.connection && navigator.connection.saveData)){ siap = true; try{ muatModel().catch(function(){}); }catch(e){} }
+      return;
+    }
+    jalan = true;
+    window.api("getWajah", { token:S.token }).catch(function(){}).then(function(){ jalan = false; });
+  }, 3000);
 })();
