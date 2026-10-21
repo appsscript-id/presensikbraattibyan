@@ -110,3 +110,9 @@ body.gelap .kSt .s0,body.gelap .kSt .s1,body.gelap .kSt .s2,body.gelap .kSt .s3{
   body.app #vDash>.card{grid-column:1;grid-row:2/6;min-height:0}
   body.app #vDash #listSiswa{grid-template-columns:1fr}
 }
+
+/* ---------- dashboard guru: satu tombol Scan Wajah (di kartu sapaan), Muat Ulang tetap ada ---------- */
+#vDash .bar:has(button[onclick="mulaiScan()"]),
+#vDash button[onclick="mulaiScan()"],
+#vDash button[onclick="setSemua('Hadir')"],
+#vDash #filt{display:none!important}
