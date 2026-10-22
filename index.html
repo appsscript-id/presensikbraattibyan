@@ -411,6 +411,9 @@ function show(id){ VIEWS.forEach(function(v){ $(v).classList.add("hidden"); }); 
 function say(el, t, c){ el.className = "msg " + (c || ""); el.textContent = t; }
 function pilih(id){ ["loginMsg","kLoginMsg","wMsg"].forEach(function(m){ say($(m), ""); }); show(id); }
 function bln(){ var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth()+1)).slice(-2); }
+// libur mingguan: semua kelas libur Sabtu & Minggu; kelas KB juga libur hari Rabu. w: 0 = Minggu ... 6 = Sabtu
+function kelasKB(k){ return String(k || "").toLowerCase().replace(/[\s\-_]/g, "") === "kb"; }
+function hariLiburMingguan(kelas, w){ return w === 0 || w === 6 || (w === 3 && kelasKB(kelas)); }
 function apiSiap(el){
   if(API_URL.indexOf("https://script.google.com/") !== 0){ say(el, "API_URL belum diisi di index.html", "err"); return false; }
   return true;
@@ -1821,15 +1824,15 @@ tampilRekap = function(r, eR, eL){
   for(var t = 1; t <= n; t++){
     var c = document.createElement("div"), x = by[t];
     var hl = LIBURMAP[r.bulan + "-" + ("0" + t).slice(-2)];
-    var libur = (off + t - 1) % 7 >= 5 || !!hl;
+    var libur = hariLiburMingguan(r.kelas, (off + t) % 7) || !!hl;
     c.className = "kc" + (x ? " k-" + x.status : (libur ? " kw" : ""));
     c.textContent = t;
-    if(x) c.title = x.status + " (" + x.jam + ")"; else if(libur) c.title = hl || "Libur (Sabtu/Minggu)";
+    if(x) c.title = x.status + " (" + x.jam + ")"; else if(libur) c.title = hl || "Libur mingguan";
     cal.appendChild(c);
   }
   eL.appendChild(cal);
   var lg = document.createElement("div"); lg.className = "kleg";
-  lg.innerHTML = '<span><i class="k-Hadir"></i>Hadir</span><span><i class="k-Izin"></i>Izin</span><span><i class="k-Sakit"></i>Sakit</span><span><i class="k-Alpa"></i>Alpa</span><span><i class="lib"></i>Libur (Sabtu/Minggu/tanggal merah)</span>';
+  lg.innerHTML = '<span><i class="k-Hadir"></i>Hadir</span><span><i class="k-Izin"></i>Izin</span><span><i class="k-Sakit"></i>Sakit</span><span><i class="k-Alpa"></i>Alpa</span><span><i class="lib"></i>Libur (mingguan/tanggal merah)</span>';
   eL.appendChild(lg);
   r.list.slice().reverse().forEach(function(x){ baris(eL, x.tanggal, x.status + " (" + x.jam + ")"); });   // tanggal terbaru di atas
 };
@@ -1837,7 +1840,7 @@ tampilRekap = function(r, eR, eL){
 // ---------- REKAP: tabel kelas per bulan + unduh Excel / cetak ----------
 function htmlTabel(r){
   var y = Number(r.bulan.substring(0, 4)), m = Number(r.bulan.substring(5, 7));
-  function wk(d){ var w = new Date(y, m - 1, d).getDay(); return w === 0 || w === 6 ? "wk" : ""; }
+  function wk(d){ return hariLiburMingguan(r.kelas, new Date(y, m - 1, d).getDay()) ? "wk" : ""; }
   var h = '<table class="tb"><thead><tr><th>Nama</th>', d;
   for(d = 1; d <= r.hari; d++) h += '<th class="' + wk(d) + '">' + d + "</th>";
   h += "<th>H</th><th>I</th><th>S</th><th>A</th><th>%</th></tr></thead><tbody>";
@@ -1875,7 +1878,7 @@ function cetakTabel(r){
     '.wk{background:#f3d9da}th.wk{color:#b3262b}.k-Hadir{background:#16a679;color:#fff}.k-Izin{background:#f5a524;color:#3d2a00}.k-Sakit{background:#2f7df6;color:#fff}.k-Alpa{background:#e5484d;color:#fff}' +
     '.rendah td:first-child,.rendah .pr{color:#b3262b;font-weight:700}.sum{font-weight:700}p{margin-top:8px;color:#555}' +
     '</style></head><body><h3>Rekap Absensi Kelas ' + esc(r.kelas) + ' - ' + namaBulan(r.bulan) + '</h3>' + htmlTabel(r) +
-    '<p>H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu (libur).</p></body></html>');
+    '<p>H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = hari libur mingguan (Sabtu/Minggu, KB juga Rabu).</p></body></html>');
   w.document.close(); w.focus(); setTimeout(function(){ w.print(); }, 300);
 }
 function renderTabel(box, r){
@@ -1886,7 +1889,7 @@ function renderTabel(box, r){
   box.appendChild(bar);
   var w = document.createElement("div"); w.className = "tbw"; w.innerHTML = htmlTabel(r); box.appendChild(w);
   var n = document.createElement("div"); n.className = "msg"; n.style.fontSize = "11.5px";
-  n.textContent = "H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu (libur)."; box.appendChild(n);
+  n.textContent = "H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = hari libur mingguan (Sabtu/Minggu, KB juga Rabu)."; box.appendChild(n);
 }
 function muatTabelGuru(){
   var b = $("rkBulan").value; if(!b){ say($("rkMsg"), "Pilih bulan.", "err"); return; }
@@ -2031,7 +2034,7 @@ var ing = document.createElement("div"); ing.id = "ingat";
 $("vDash").insertBefore(ing, st);
 function ingatkan(){
   var n = wibSekarang(), belum = S.siswa.filter(function(x){ return !x.status; });
-  var sekolah = n.hari >= 1 && n.hari <= 5 && !LIBURMAP[n.tgl];
+  var sekolah = !hariLiburMingguan(S.kelas, n.hari) && !LIBURMAP[n.tgl];
   if(!S.token || !sekolah || n.menit < BATAS_ABSEN || !belum.length){ ing.className = ""; ing.textContent = ""; return; }
   var nama = belum.slice(0, 5).map(function(x){ return x.nama; }).join(", ") + (belum.length > 5 ? " dan " + (belum.length - 5) + " lainnya" : "");
   ing.textContent = "⏰ " + belum.length + " murid belum diabsen (sudah lewat pukul 08.30): " + nama + ".";
@@ -2314,7 +2317,7 @@ function buatPdf(o){
 
 function pdfBulan(r){
   var y = Number(r.bulan.substring(0, 4)), m = Number(r.bulan.substring(5, 7)), d;
-  function wk(t){ var w = new Date(y, m - 1, t).getDay(); return w === 0 || w === 6; }
+  function wk(t){ return hariLiburMingguan(r.kelas, new Date(y, m - 1, t).getDay()); }
   var hd = ["Nama"], cs = { 0:{ halign:"left", cellWidth:38 } };
   for(d = 1; d <= r.hari; d++){ hd.push(String(d)); cs[d] = { cellWidth:5.6 }; }
   ["H","I","S","A","%"].forEach(function(t, i){ hd.push(t); cs[r.hari + 1 + i] = { cellWidth:8 }; });
@@ -2327,7 +2330,7 @@ function pdfBulan(r){
   return buatPdf({ kepsek:r.kepsek,
     judul:"Rekap Absensi Kelas " + r.kelas, sub:namaBulan(r.bulan) + " - " + r.siswa.length + " murid",
     head:[hd], body:body, fs:6.5, pad:0.8, cs:cs, file:"Absensi " + r.kelas + " " + r.bulan + ".pdf",
-    ket:"H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu.",
+    ket:"H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = hari libur mingguan (Sabtu/Minggu, KB juga Rabu).",
     sel:function(c){
       var i = c.column.index;
       if(i >= 1 && i <= r.hari){
@@ -2428,7 +2431,7 @@ renderTabel = function(box, r){
   tbBtn(bar, "🖨️ Cetak", function(){ cetakTabel(r); });
   box.appendChild(bar);
   var w = document.createElement("div"); w.className = "tbw"; w.innerHTML = htmlTabel(r); box.appendChild(w);
-  catatanTabel(box, "H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu (libur).");
+  catatanTabel(box, "H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = hari libur mingguan (Sabtu/Minggu, KB juga Rabu).");
 };
 
 function bangunPeriode(refSel, ambilArg, msgId, ringId, listId, getToken){
@@ -2469,7 +2472,7 @@ bangunPeriode('#vKRekap button[onclick="muatKRekap()"]', function(){
 }, "krMsg", "krRingkas", "krList", function(){ return K.token; });
 
 // ---------- Excel / cetak ukuran A4 ----------
-var KET_BLN = "H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = Sabtu/Minggu (libur).";
+var KET_BLN = "H = Hadir, I = Izin, S = Sakit, A = Alpa. Nama merah = kehadiran di bawah 75%. Kolom merah muda = hari libur mingguan (Sabtu/Minggu, KB juga Rabu).";
 var KET_PRD = "Isi kolom bulan = Hadir/Izin/Sakit/Alpa. H = total Hadir, I = Izin, S = Sakit, A = Alpa, % = persentase hadir. Nama merah = kehadiran di bawah 75%.";
 var CSS_TB = 'body{font-family:Arial,sans-serif;font-size:11px}h3{margin:0 0 4px}p{margin:4px 0;color:#555}' +
   'table{border-collapse:collapse}th,td{border:1px solid #999;padding:2px 3px;text-align:center}' +
@@ -2562,7 +2565,7 @@ function muatKoreksi(){
   ambil("getAbsenTanggal", { token:S.token, tanggal:t }, $("kkMsg"), function(r){
     KK = r.siswa.map(function(x){ return { nama:x.nama, awal:x.status || "", nilai:x.status || "", jam:x.jam || "" }; });
     gambarKoreksi();
-    var wd = utcDari(t).getUTCDay(), cat = LIBURMAP[t] || ((wd === 0 || wd === 6) ? "akhir pekan" : "");
+    var wd = utcDari(t).getUTCDay(), cat = LIBURMAP[t] || (hariLiburMingguan(S.kelas, wd) ? (wd === 3 ? "Rabu libur mingguan KB" : "akhir pekan") : "");
     if(cat) say($("kkMsg"), "Catatan: tanggal ini libur (" + cat + ").", "info");
   }, logout);
 }
@@ -2862,7 +2865,7 @@ function konfirmasi(teks, labelOk, fn){
     var n = wibSekarang(), t = n.tgl;
     if(r.bulan !== t.substring(0, 7)){ ban.style.display = "none"; return; }
     var x = null; r.list.forEach(function(i){ if(i.key === t) x = i; });
-    var lib = LIBURMAP[t] || ((n.hari === 0 || n.hari === 6) ? "Akhir pekan" : "");
+    var lib = LIBURMAP[t] || (hariLiburMingguan(r.kelas, n.hari) ? (n.hari === 3 ? "Rabu libur mingguan KB" : "Akhir pekan") : "");
     var E = { Hadir:"😊", Izin:"📝", Sakit:"🤒", Alpa:"😢" }, em, judul, sub;
     if(x){
       em = E[x.status] || "✅"; judul = "Hari ini: " + x.status;
@@ -3012,7 +3015,7 @@ function konfirmasi(teks, labelOk, fn){
     if(!t){ say(m, "Pilih tanggalnya dulu.", "err"); return; }
     if((f.min && t < f.min) || (f.max && t > f.max)){ say(m, "Tanggal di luar batas. Pilih 3 hari terakhir sampai 30 hari ke depan.", "err"); return; }
     var hr = utcDari(t).getUTCDay();
-    if(hr === 0 || hr === 6){ say(m, "Sabtu dan Minggu bukan hari sekolah.", "err"); return; }
+    if(hariLiburMingguan(W.kelas, hr)){ say(m, hr === 3 ? "Hari Rabu libur untuk kelas KB." : "Sabtu dan Minggu bukan hari sekolah.", "err"); return; }
     if(LIBURMAP && LIBURMAP[t]){ say(m, "Tanggal itu libur sekolah (" + LIBURMAP[t] + ").", "err"); return; }
     if(!JENIS_IZ){ say(m, "Pilih Izin atau Sakit.", "err"); return; }
     if(a.length < 3){ say(m, "Tulis alasan singkat (minimal 3 huruf).", "err"); return; }
