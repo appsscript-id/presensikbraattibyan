@@ -1823,7 +1823,7 @@ tampilRekap = function(r, eR, eL){
   for(var i = 0; i < off; i++) cal.appendChild(document.createElement("div"));
   for(var t = 1; t <= n; t++){
     var c = document.createElement("div"), x = by[t];
-    var hl = LIBURMAP[r.bulan + "-" + ("0" + t).slice(-2)];
+    var hl = liburKelas(r.kelas, r.bulan + "-" + ("0" + t).slice(-2));
     var libur = hariLiburMingguan(r.kelas, (off + t) % 7) || !!hl;
     c.className = "kc" + (x ? " k-" + x.status : (libur ? " kw" : ""));
     c.textContent = t;
@@ -1840,7 +1840,7 @@ tampilRekap = function(r, eR, eL){
 // ---------- REKAP: tabel kelas per bulan + unduh Excel / cetak ----------
 function htmlTabel(r){
   var y = Number(r.bulan.substring(0, 4)), m = Number(r.bulan.substring(5, 7));
-  function wk(d){ return hariLiburMingguan(r.kelas, new Date(y, m - 1, d).getDay()) ? "wk" : ""; }
+  function wk(d){ return (hariLiburMingguan(r.kelas, new Date(y, m - 1, d).getDay()) || liburKelas(r.kelas, r.bulan + "-" + ("0" + d).slice(-2))) ? "wk" : ""; }
   var h = '<table class="tb"><thead><tr><th>Nama</th>', d;
   for(d = 1; d <= r.hari; d++) h += '<th class="' + wk(d) + '">' + d + "</th>";
   h += "<th>H</th><th>I</th><th>S</th><th>A</th><th>%</th></tr></thead><tbody>";
@@ -2003,6 +2003,17 @@ function stat(){
 
 // ---------- LIBUR: data dari sheet "Hari Libur" ----------
 var LIBUR = null, LIBURMAP = {}, lbLalu = false;
+// libur insidental (dari guru / kepala sekolah), dicek per kelas supaya libur satu kelas tidak menandai kelas lain
+var INFO_LIBUR = [];
+function liburKelas(kelas, key){
+  if(LIBURMAP[key]) return LIBURMAP[key];
+  var nk = function(v){ return String(v || "").toLowerCase().replace(/[\s\-_]/g, ""); };
+  for(var i = 0; i < INFO_LIBUR.length; i++){
+    var o = INFO_LIBUR[i];
+    if(key >= o.mulai && key <= o.sampai && (o.untuk === "Semua" || nk(o.untuk) === nk(kelas))) return o.ket;
+  }
+  return "";
+}
 function utcDari(k){ return new Date(Date.UTC(+k.substring(0, 4), +k.substring(5, 7) - 1, +k.substring(8, 10))); }
 function kunciDari(d){ return d.toISOString().substring(0, 10); }
 function tglIndo(k){ return utcDari(k).toLocaleDateString("id-ID", { timeZone:"UTC", weekday:"short", day:"numeric", month:"short" }); }
@@ -2317,7 +2328,7 @@ function buatPdf(o){
 
 function pdfBulan(r){
   var y = Number(r.bulan.substring(0, 4)), m = Number(r.bulan.substring(5, 7)), d;
-  function wk(t){ return hariLiburMingguan(r.kelas, new Date(y, m - 1, t).getDay()); }
+  function wk(t){ return hariLiburMingguan(r.kelas, new Date(y, m - 1, t).getDay()) || !!liburKelas(r.kelas, r.bulan + "-" + ("0" + t).slice(-2)); }
   var hd = ["Nama"], cs = { 0:{ halign:"left", cellWidth:38 } };
   for(d = 1; d <= r.hari; d++){ hd.push(String(d)); cs[d] = { cellWidth:5.6 }; }
   ["H","I","S","A","%"].forEach(function(t, i){ hd.push(t); cs[r.hari + 1 + i] = { cellWidth:8 }; });
@@ -3201,10 +3212,11 @@ function konfirmasi(teks, labelOk, fn){
 
   // libur insidental ikut masuk daftar libur + penanda kalender (tanpa mengubah sheet "Hari Libur")
   function gabungInfoKeLibur(){
+    INFO_LIBUR = INFO.filter(function(i){ return i.jenis === "Libur Insidental"; });
     if(!LIBUR) return;
     LIBUR = LIBUR.filter(function(x){ return !x.info; });
     INFO.forEach(function(i){
-      if(i.jenis === "Libur Insidental") LIBUR.push({ mulai:i.mulai, selesai:i.sampai, ket:i.ket, jenis:"Libur Insidental", info:true });
+      if(i.jenis === "Libur Insidental" && NAVROLE !== "kepsek") LIBUR.push({ mulai:i.mulai, selesai:i.sampai, ket:i.ket, jenis:"Libur Insidental", info:true });
     });
     LIBUR.sort(function(x, y){ return x.mulai < y.mulai ? -1 : x.mulai > y.mulai ? 1 : 0; });
     LIBURMAP = {};
@@ -3461,6 +3473,10 @@ function konfirmasi(teks, labelOk, fn){
   show = function(id){
     _showInfo(id);
     document.documentElement.classList.toggle("ptrWali", NAVROLE === "wali" && (id === "vWaliHasil" || id === "vWLibur" || id === "vWIzin"));
+    // guru & kepala sekolah: muat libur insidental begitu masuk / membuka rekap, tidak menunggu menu Libur dibuka
+    if((NAVROLE === "guru" || NAVROLE === "kepsek") && (id === "vDash" || id === "vKepsek" || id === "vRekap" || id === "vKRekap" || id === "vKoreksi")){
+      muatLibur().catch(function(){});
+    }
     if(id === "vWaliHasil" && NAVROLE === "wali"){
       try{ if(W.token) sessionStorage.setItem("sesiWali", JSON.stringify({ token:W.token, nama:W.nama, kelas:W.kelas })); }catch(e){}
       muatInfoSekolah().then(function(){ gabungInfoKeLibur(); gambarInfoWali(); });
