@@ -2004,7 +2004,7 @@ function stat(){
 // ---------- LIBUR: data dari sheet "Hari Libur" ----------
 var LIBUR = null, LIBURMAP = {}, lbLalu = false;
 // libur insidental (dari guru / kepala sekolah), dicek per kelas supaya libur satu kelas tidak menandai kelas lain
-var INFO_LIBUR = [];
+var INFO_LIBUR = [], LIBUR_SIAP = false;   // LIBUR_SIAP: data libur (termasuk insidental) sudah selesai dimuat
 function liburKelas(kelas, key){
   if(LIBURMAP[key]) return LIBURMAP[key];
   var nk = function(v){ return String(v || "").toLowerCase().replace(/[\s\-_]/g, ""); };
@@ -2046,7 +2046,7 @@ $("vDash").insertBefore(ing, st);
 function ingatkan(){
   var n = wibSekarang(), belum = S.siswa.filter(function(x){ return !x.status; });
   var sekolah = !hariLiburMingguan(S.kelas, n.hari) && !LIBURMAP[n.tgl];
-  if(!S.token || !sekolah || n.menit < BATAS_ABSEN || !belum.length){ ing.className = ""; ing.textContent = ""; return; }
+  if(!S.token || !LIBUR_SIAP || !sekolah || n.menit < BATAS_ABSEN || !belum.length){ ing.className = ""; ing.textContent = ""; return; }
   var nama = belum.slice(0, 5).map(function(x){ return x.nama; }).join(", ") + (belum.length > 5 ? " dan " + (belum.length - 5) + " lainnya" : "");
   ing.textContent = "⏰ " + belum.length + " murid belum diabsen (sudah lewat pukul 08.30): " + nama + ".";
   ing.className = "on";
@@ -3475,7 +3475,7 @@ function konfirmasi(teks, labelOk, fn){
     document.documentElement.classList.toggle("ptrWali", NAVROLE === "wali" && (id === "vWaliHasil" || id === "vWLibur" || id === "vWIzin"));
     // guru & kepala sekolah: muat libur insidental begitu masuk / membuka rekap, tidak menunggu menu Libur dibuka
     if((NAVROLE === "guru" || NAVROLE === "kepsek") && (id === "vDash" || id === "vKepsek" || id === "vRekap" || id === "vKRekap" || id === "vKoreksi")){
-      muatLibur().catch(function(){});
+      muatLibur().catch(function(){}).then(function(){ LIBUR_SIAP = true; ingatkan(); });
     }
     if(id === "vWaliHasil" && NAVROLE === "wali"){
       try{ if(W.token) sessionStorage.setItem("sesiWali", JSON.stringify({ token:W.token, nama:W.nama, kelas:W.kelas })); }catch(e){}
