@@ -3185,6 +3185,7 @@ function konfirmasi(teks, labelOk, fn){
 // ---------- v16: libur insidental & pengumuman dari guru, tampil di beranda wali ----------
 (function(){
   var INFO = [], INFO_T = 0, INFO_TOK = "", INFO_P = null, JENIS_INFO = "Libur Insidental", UNTUK_INFO = "kelas", EDIT = null;
+  var LI_ALL = [];   // semua libur insidental (termasuk yang sudah lewat)
   function el(tag, cls, teks){ var e = document.createElement(tag); if(cls) e.className = cls; if(teks !== undefined) e.textContent = teks; return e; }
   function tglRentang(i){ return i.sampai !== i.mulai ? tglIndo(i.mulai) + " – " + tglIndo(i.sampai) : tglIndo(i.mulai) + " " + i.mulai.substring(0, 4); }
   var IKON = { "Libur Insidental":"🚨", "Pulang cepat":"⏰", "Pengumuman":"📢" };
@@ -3205,14 +3206,17 @@ function konfirmasi(teks, labelOk, fn){
     if(!paksa && INFO_TOK === t.token && Date.now() - INFO_T < 30000) return Promise.resolve(INFO);
     INFO_P = api(t.act, { token:t.token }).then(function(r){
       if(r && r.status === "success"){ INFO = r.list || []; INFO_TOK = t.token; INFO_T = Date.now(); }
-      INFO_P = null; return INFO;
-    }).catch(function(){ INFO_P = null; return INFO; });
+      return api("getLiburInsidental").then(function(x){
+        if(x && x.status === "success") LI_ALL = x.list || [];
+      }).catch(function(){});
+    }).then(function(){ INFO_P = null; return INFO; })
+      .catch(function(){ INFO_P = null; return INFO; });
     return INFO_P;
   }
 
   // libur insidental ikut masuk daftar libur + penanda kalender (tanpa mengubah sheet "Hari Libur")
   function gabungInfoKeLibur(){
-    INFO_LIBUR = INFO.filter(function(i){ return i.jenis === "Libur Insidental"; });
+    INFO_LIBUR = LI_ALL;
     if(!LIBUR) return;
     LIBUR = LIBUR.filter(function(x){ return !x.info; });
     INFO.forEach(function(i){
