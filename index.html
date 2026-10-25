@@ -262,7 +262,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
   <img src="logo.png" class="logo-login" alt="Logo sekolah" onerror="this.style.display='none'">
   <div class="judul"><p class="t1">Presensi Online</p><p class="t2">KB RA At Tibyan</p><hr></div>
   <p class="lead">Masuk sebagai</p>
-  <button class="role guru" onclick="pilih('vLogin')"><span class="ic">👩‍🏫</span><span class="tx"><b>Guru</b><small>Absensi digital murid</small></span><span class="ar">›</span></button>
+  <button class="role guru" onclick="pilih('vLogin')"><span class="ic">👩‍🏫</span><span class="tx"><b>Guru</b><small>Absensi &amp; scan wajah murid</small></span><span class="ar">›</span></button>
   <button class="role kepsek" onclick="pilih('vKLogin')"><span class="ic">🧕</span><span class="tx"><b>Kepala Sekolah</b><small>Ringkasan seluruh kelas</small></span><span class="ar">›</span></button>
   <button class="role wali" onclick="pilih('vWali')"><span class="ic">👨‍👩‍👧</span><span class="tx"><b>Wali Murid</b><small>Lihat kehadiran anak</small></span><span class="ar">›</span></button>
   <button type="button" class="gray" id="pasangDepan" style="margin-top:14px">📲 Pasang Aplikasi di HP</button>
@@ -426,8 +426,22 @@ function perangkat(){
   return os + (br ? " · " + br : "") + app;
 }
 function api(action, data){
+  // login: guru langsung menerima daftar muridnya (awal), dan riwayat login dicatat belakangan (tunda)
+  var tambah = action === "login" ? { awal:true, tunda:true } : (action === "loginKepsek" || action === "loginWali") ? { tunda:true } : null;
   return fetch(API_URL, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" },
-    body: JSON.stringify(Object.assign({ action:action, ua:perangkat() }, data || {})) }).then(function(r){ return r.json(); });
+    body: JSON.stringify(Object.assign({ action:action, ua:perangkat() }, tambah || {}, data || {})) }).then(function(r){ return r.json(); }).then(function(r){
+    if(tambah && r && r.status === "success" && r.token) catatLoginNanti(action, r.token);
+    return r;
+  });
+}
+function catatLoginNanti(action, token){
+  var peran = action === "loginKepsek" ? "kepsek" : action === "loginWali" ? "wali" : "guru";
+  setTimeout(function(){
+    try{
+      fetch(API_URL, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" },
+        body: JSON.stringify({ action:"catatLogin", token:token, peran:peran, ua:perangkat() }) }).catch(function(){});
+    }catch(e){}
+  }, 5000);
 }
 function galat(e){ return "Gagal terhubung ke server. Cek internet / URL API. (" + (e && e.message ? e.message : e) + ")"; }
 function sesiHabis(r){ return r && String(r.message).indexOf("Sesi habis") >= 0; }
@@ -760,18 +774,22 @@ function openDash(){
   $("dTgl").textContent = new Date().toLocaleDateString("id-ID", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
   S.selesai = {}; muatSiswa();
 }
+function terapSiswa(r){
+  var fc = fotoCache(S.kelas);
+  S.siswa = r.siswa.map(function(x){ return { nama:x.nama, status:x.status, ada:x.ada, foto:fc[x.nama] || "", desc:null, nilai:x.status || "" }; });
+  renderSiswa();
+  fotoSegarkan(S.kelas, function(map){            // foto menyusul di belakang, daftar sudah tampil duluan
+    var beda = false;
+    S.siswa.forEach(function(x){ var f = map[x.nama] || ""; if(f !== x.foto){ x.foto = f; beda = true; } });
+    if(beda) renderSiswa();
+  });
+}
 function muatSiswa(){
+  if(S.awal){                                      // daftar murid sudah dikirim bersama login: langsung tampil
+    var r0 = S.awal; S.awal = null; say($("dashMsg"), ""); terapSiswa(r0); return;
+  }
   $("listSiswa").textContent = "Memuat...";
-  ambil("getSiswa", { token:S.token }, $("dashMsg"), function(r){
-    var fc = fotoCache(S.kelas);
-    S.siswa = r.siswa.map(function(x){ return { nama:x.nama, status:x.status, ada:x.ada, foto:fc[x.nama] || "", desc:null, nilai:x.status || "" }; });
-    renderSiswa();
-    fotoSegarkan(S.kelas, function(map){            // foto menyusul di belakang, daftar sudah tampil duluan
-      var beda = false;
-      S.siswa.forEach(function(x){ var f = map[x.nama] || ""; if(f !== x.foto){ x.foto = f; beda = true; } });
-      if(beda) renderSiswa();
-    });
-  }, logout);
+  ambil("getSiswa", { token:S.token }, $("dashMsg"), terapSiswa, logout);
 }
 function renderSiswa(){
   var box = $("listSiswa"); box.innerHTML = "";
@@ -1765,7 +1783,7 @@ function loginAkun(act, box, msg, daftar, sukses){
   return muat;
 }
 var muatGuru = loginAkun("login", "gBox", "loginMsg", { act:"daftarGuru", key:"guru" }, function(r){
-  S.token = r.token; S.nama = r.namaGuru; S.kelas = r.kelas; FOTOAKUN.guru = r.foto || "";
+  S.token = r.token; S.nama = r.namaGuru; S.kelas = r.kelas; FOTOAKUN.guru = r.foto || ""; S.awal = r.awal || null;
   sessionStorage.setItem("sesi", JSON.stringify({ role:"guru", token:S.token, nama:S.nama, kelas:S.kelas, foto:FOTOAKUN.guru }));
   openDash();
 });
