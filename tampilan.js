@@ -54,8 +54,9 @@
 })();
 
 // Percepat Scan Wajah: data wajah diunduh diam-diam saat dashboard terbuka, lalu dipakai ulang (10 menit)
+// Unduhan baru dimulai 8 detik setelah daftar murid tampil, supaya tidak berebut jaringan dengan data utama.
 (function(){
-  var cache = null, cacheT = 0, cacheTok = "", jalan = false, siap = false;
+  var cache = null, cacheT = 0, cacheTok = "", jalan = false, siap = false, tunggu = 0;
   var asli = window.api;
   if(typeof asli !== "function") return;
   window.api = function(action, data){
@@ -74,7 +75,10 @@
   };
   setInterval(function(){
     var S = window.S, vd = document.getElementById("vDash");
-    if(!S || !S.token || jalan || !vd || vd.classList.contains("hidden")) return;
+    if(!S || !S.token || jalan || !vd || vd.classList.contains("hidden")){ tunggu = 0; return; }
+    if(!S.siswa || !S.siswa.length){ tunggu = 0; return; }       // daftar murid belum tampil: tunggu dulu
+    if(!tunggu){ tunggu = Date.now(); return; }
+    if(Date.now() - tunggu < 8000) return;                        // beri waktu data utama selesai dimuat
     if(cache && cacheTok === S.token){
       if(!siap && window.muatModel && !(navigator.connection && navigator.connection.saveData)){ siap = true; try{ muatModel().catch(function(){}); }catch(e){} }
       return;
