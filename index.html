@@ -1776,6 +1776,7 @@ function loginAkun(act, box, msg, daftar, sukses){
       unlockSuara(); say($(msg), "Memproses login...", "info");
       api(act, { username:g.username, password:p }).then(function(r){
         if(!r || r.status !== "success"){ say($(msg), (r && r.message) || "Login gagal", "err"); reset(); return; }
+        if(!r.foto) r.foto = g.foto || "";   // foto dari daftar nama (server tidak mengirim ulang saat login)
         say($(msg), ""); bunyiMasuk(); sukses(r);
       }).catch(function(e){ say($(msg), galat(e), "err"); reset(); });
     }});
@@ -3886,7 +3887,7 @@ function mulaiNotifPush(){
     new MutationObserver(function(){ if(!vs.classList.contains("hidden")) tampil(); }).observe(vs, { attributes:true, attributeFilter:["class"] });
   }catch(e){}
   var _openDash = window.openDash;
-  if(typeof _openDash === "function") window.openDash = function(){ var r = _openDash.apply(this, arguments); segarkan(); return r; };
+  if(typeof _openDash === "function") window.openDash = function(){ var r = _openDash.apply(this, arguments); setTimeout(segarkan, 15000); return r; };
   tampil();
 }
 if(document.readyState === "complete") mulaiNotifPush(); else window.addEventListener("load", mulaiNotifPush);
