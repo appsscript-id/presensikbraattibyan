@@ -1,6 +1,6 @@
 // Service worker Presensi KB RA At Tibyan
 // Naikkan angka versi (absen-v2, v3, ...) bila ingin memaksa HP mengambil file baru.
-var CACHE = "absen-v9";
+var CACHE = "absen-v10";
 var FILES = [
   "./", "./index.html", "./manifest.json", "./logo.png",
   "./icon-192.png", "./icon-512.png", "./bunyi.mp3", "./masuk.mp3", "./salam.mp3",
@@ -11,7 +11,7 @@ self.addEventListener("install", function (e) {
   e.waitUntil(
     caches.open(CACHE).then(function (c) {
       // file yang belum ada (mis. mp3) dilewati, tidak menggagalkan instalasi
-      return Promise.all(FILES.map(function (f) { return c.add(f).catch(function () {}); }));
+      return Promise.all(FILES.map(function (f) { return c.add(new Request(f, { cache: "reload" })).catch(function () {}); }));
     }).then(function () { return self.skipWaiting(); })
   );
 });
@@ -26,20 +26,26 @@ self.addEventListener("activate", function (e) {
 });
 
 // Hanya file aplikasi (satu domain, GET). Apps Script, CDN face-api, dan suara online tidak disentuh.
+// Strategi: tampilkan dari cache dulu (cepat, juga saat sinyal lemah), lalu perbarui cache di belakang layar.
+// Versi baru aplikasi terlihat pada pembukaan berikutnya. Permintaan Range (audio) dibiarkan lewat jaringan.
 self.addEventListener("fetch", function (e) {
   var req = e.request;
   if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
-  e.respondWith(
-    fetch(req).then(function (res) {
+  if (req.headers.has("range")) return;
+  var tugas = caches.match(req, { ignoreSearch: true }).then(function (hit) {
+    var jaringan = fetch(req).then(function (res) {
       if (res && res.status === 200) {
         var salinan = res.clone();
         caches.open(CACHE).then(function (c) { c.put(req, salinan); });
       }
       return res;
     }).catch(function () {
-      return caches.match(req).then(function (hit) { return hit || caches.match("./index.html"); });
-    })
-  );
+      return hit || caches.match("./index.html");
+    });
+    return { hit: hit, jaringan: jaringan };
+  });
+  e.respondWith(tugas.then(function (x) { return x.hit || x.jaringan; }));
+  e.waitUntil(tugas.then(function (x) { return x.jaringan.catch(function () {}); }));
 });
 
 // ---------- NOTIFIKASI PUSH (pengingat murid belum diabsen) ----------
