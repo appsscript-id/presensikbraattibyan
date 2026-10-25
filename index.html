@@ -3866,9 +3866,8 @@ if ("serviceWorker" in navigator) {
 </script>
 <style>
 /* beranda: kartu putih memanjang memenuhi layar (tidak ada ruang kosong di atas/bawah) */
-body{align-items:stretch}
-.wrap:has(#vPilih:not(.hidden)){display:flex;flex-direction:column;margin:0 auto}
-#vPilih{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-evenly;margin-bottom:0}
+/* ubah angka 80dvh untuk memanjang/memendekkan kartu (makin besar makin panjang) */
+#vPilih{min-height:80vh;min-height:80dvh;display:flex;flex-direction:column;justify-content:space-evenly}
 </style>
 <link rel="stylesheet" href="tampilan.css">
 <script src="tampilan.js" defer></script>
