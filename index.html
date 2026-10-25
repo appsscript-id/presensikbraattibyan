@@ -262,7 +262,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
   <img src="logo.png" class="logo-login" alt="Logo sekolah" onerror="this.style.display='none'">
   <div class="judul"><p class="t1">Presensi Online</p><p class="t2">KB RA At Tibyan</p><hr></div>
   <p class="lead">Masuk sebagai</p>
-  <button class="role guru" onclick="pilih('vLogin')"><span class="ic">👩‍🏫</span><span class="tx"><b>Guru</b><small>Absensi digital murid</small></span><span class="ar">›</span></button>
+  <button class="role guru" onclick="pilih('vLogin')"><span class="ic">👩‍🏫</span><span class="tx"><b>Guru</b><small>Absensi &amp; scan wajah murid</small></span><span class="ar">›</span></button>
   <button class="role kepsek" onclick="pilih('vKLogin')"><span class="ic">🧕</span><span class="tx"><b>Kepala Sekolah</b><small>Ringkasan seluruh kelas</small></span><span class="ar">›</span></button>
   <button class="role wali" onclick="pilih('vWali')"><span class="ic">👨‍👩‍👧</span><span class="tx"><b>Wali Murid</b><small>Lihat kehadiran anak</small></span><span class="ar">›</span></button>
   <button type="button" class="gray" id="pasangDepan" style="margin-top:14px">📲 Pasang Aplikasi di HP</button>
@@ -1142,7 +1142,7 @@ body.gelap{color-scheme:dark;--bg:#0f1624;--card:#17213a;--ink:#e8eefb;--ink2:#b
 .pad button:hover{background:var(--line)}
 .pad button:active{background:var(--brand);color:#fff}
 .lead2{text-align:center;font-size:14px;font-weight:700;color:var(--ink2);margin:0 0 10px}
-.nlist{display:flex;flex-direction:column;gap:8px;max-height:120vh;max-height:120dvh;overflow-y:auto}
+.nlist{display:flex;flex-direction:column;gap:8px;max-height:48vh;max-height:48dvh;overflow-y:auto}
 .nb2{display:flex;align-items:center;gap:12px;text-align:left;margin:0;padding:11px 14px;background:var(--field);color:var(--ink);border-radius:18px;box-shadow:none;width:100%}
 .nb2:hover{background:var(--brand-soft)}
 .nb2 .av{flex:0 0 40px;height:40px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
@@ -3864,6 +3864,12 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js"); });
 }
 </script>
+<style>
+/* beranda: kartu putih memanjang memenuhi layar (tidak ada ruang kosong di atas/bawah) */
+body{align-items:stretch}
+.wrap:has(#vPilih:not(.hidden)){display:flex;flex-direction:column;margin:0 auto}
+#vPilih{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-evenly;margin-bottom:0}
+</style>
 <link rel="stylesheet" href="tampilan.css">
 <script src="tampilan.js" defer></script>
 </body>
