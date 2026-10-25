@@ -262,7 +262,7 @@ button,.role.guru,.role.guru:hover,.role.kepsek,.role.kepsek:hover,.role.wali,.r
   <img src="logo.png" class="logo-login" alt="Logo sekolah" onerror="this.style.display='none'">
   <div class="judul"><p class="t1">Presensi Online</p><p class="t2">KB RA At Tibyan</p><hr></div>
   <p class="lead">Masuk sebagai</p>
-  <button class="role guru" onclick="pilih('vLogin')"><span class="ic">👩‍🏫</span><span class="tx"><b>Guru</b><small>Absensi &amp; scan wajah murid</small></span><span class="ar">›</span></button>
+  <button class="role guru" onclick="pilih('vLogin')"><span class="ic">👩‍🏫</span><span class="tx"><b>Guru</b><small>Absensi digital murid</small></span><span class="ar">›</span></button>
   <button class="role kepsek" onclick="pilih('vKLogin')"><span class="ic">🧕</span><span class="tx"><b>Kepala Sekolah</b><small>Ringkasan seluruh kelas</small></span><span class="ar">›</span></button>
   <button class="role wali" onclick="pilih('vWali')"><span class="ic">👨‍👩‍👧</span><span class="tx"><b>Wali Murid</b><small>Lihat kehadiran anak</small></span><span class="ar">›</span></button>
   <button type="button" class="gray" id="pasangDepan" style="margin-top:14px">📲 Pasang Aplikasi di HP</button>
@@ -1731,12 +1731,23 @@ function daftarNama(box, items, fn, judul, back){
 function muatDaftar(box, act, msg, fn){
   PINAKTIF = null; box.innerHTML = ""; BACK[box.id] = null;
   if(!apiSiap(msg)) return;
-  say(msg, "Memuat...", "info");
+  // daftar yang tersimpan di HP langsung ditampilkan; data terbaru diambil di belakang layar
+  var kunci = "dl_" + act, lama = null, listLama = null;
+  try{ lama = JSON.parse(localStorage.getItem(kunci) || "null"); }catch(e){}
+  if(lama && lama.status === "success"){ say(msg, ""); fn(lama); listLama = box.querySelector(".nlist"); }
+  else say(msg, "Memuat...", "info");
   api(act, {}).then(function(r){
-    if(r.status !== "success"){ say(msg, r.message, "err"); return; }
+    if(r.status !== "success"){ if(!listLama) say(msg, r.message, "err"); return; }
+    var baru = JSON.stringify(r);
+    try{ localStorage.setItem(kunci, baru); }catch(e){}
+    if(listLama){
+      // segarkan tampilan hanya bila pengguna masih di daftar yang sama dan datanya memang berubah
+      if(listLama.parentNode === box && baru !== JSON.stringify(lama)) fn(r);
+      return;
+    }
     if(msg.textContent === "Memuat...") say(msg, "");
     fn(r);
-  }).catch(function(e){ say(msg, galat(e), "err"); });
+  }).catch(function(e){ if(!listLama) say(msg, galat(e), "err"); });
 }
 function loginAkun(act, box, msg, daftar, sukses){
   function muat(){ muatDaftar($(box), daftar.act, $(msg), function(r){
@@ -3204,13 +3215,15 @@ function konfirmasi(teks, labelOk, fn){
     if(INFO_TOK !== t.token){ INFO = []; INFO_T = 0; }
     if(INFO_P) return INFO_P;
     if(!paksa && INFO_TOK === t.token && Date.now() - INFO_T < 30000) return Promise.resolve(INFO);
-    INFO_P = api(t.act, { token:t.token }).then(function(r){
+    INFO_P = Promise.all([   // dua panggilan berjalan bersamaan, bukan berurutan
+      api(t.act, { token:t.token }),
+      api("getLiburInsidental").catch(function(){ return null; })
+    ]).then(function(h){
+      var r = h[0], x = h[1];
       if(r && r.status === "success"){ INFO = r.list || []; INFO_TOK = t.token; INFO_T = Date.now(); }
-      return api("getLiburInsidental").then(function(x){
-        if(x && x.status === "success") LI_ALL = x.list || [];
-      }).catch(function(){});
-    }).then(function(){ INFO_P = null; return INFO; })
-      .catch(function(){ INFO_P = null; return INFO; });
+      if(x && x.status === "success") LI_ALL = x.list || [];
+      INFO_P = null; return INFO;
+    }).catch(function(){ INFO_P = null; return INFO; });
     return INFO_P;
   }
 
@@ -3232,7 +3245,8 @@ function konfirmasi(teks, labelOk, fn){
   }
   var _muatLiburInfo = muatLibur;
   muatLibur = function(paksa){
-    return _muatLiburInfo(paksa).then(function(){ return muatInfoSekolah(paksa); }).then(function(){
+    var pInfo = muatInfoSekolah(paksa);   // jalan bersamaan dengan getLibur
+    return Promise.all([_muatLiburInfo(paksa), pInfo]).then(function(){
       gabungInfoKeLibur();
       if(NAVROLE === "wali") gambarInfoWali(); else if(NAVROLE === "guru") gambarInfoGuru();
       return LIBUR;
